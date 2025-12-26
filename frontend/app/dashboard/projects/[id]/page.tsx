@@ -103,7 +103,14 @@ export default function ProjectDetailPage() {
     }: {
       taskId: string
       updates: Partial<Task>
-    }) => taskService.update(taskId, updates),
+    }) => {
+      // Convert assignee object to ID string if present
+      const updateData: any = { ...updates }
+      if (updates.assignee && typeof updates.assignee === 'object') {
+        updateData.assignee = updates.assignee._id
+      }
+      return taskService.update(taskId, updateData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
     },
