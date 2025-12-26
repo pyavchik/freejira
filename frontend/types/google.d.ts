@@ -13,6 +13,7 @@ interface Window {
             size: string
             width?: string
             locale?: string
+            text?: string
           }
         ) => void
       }
