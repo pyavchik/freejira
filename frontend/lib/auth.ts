@@ -44,6 +44,20 @@ export const authService = {
     return response.data.data
   },
 
+  loginWithGoogle: async (idToken: string) => {
+    const response = await api.post<{ success: boolean; data: AuthResponse }>(
+      '/auth/google',
+      { idToken }
+    )
+    if (response.data.success) {
+      Cookies.set('token', response.data.data.token, { expires: 7 })
+      Cookies.set('refreshToken', response.data.data.refreshToken, {
+        expires: 30,
+      })
+    }
+    return response.data.data
+  },
+
   logout: () => {
     Cookies.remove('token')
     Cookies.remove('refreshToken')

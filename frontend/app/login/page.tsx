@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/lib/auth'
 import toast from 'react-hot-toast'
+
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,6 +13,43 @@ export default function LoginPage() {
     password: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    // Load Google Sign-In script
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Initialize Google Sign-In button after script loads
+    const initGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          callback: handleGoogleLogin,
+        })
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            locale: 'en',
+          }
+        )
+      }
+    }
+
+    // Wait a bit for script to load
+    setTimeout(initGoogle, 100)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,6 +61,19 @@ export default function LoginPage() {
       router.push('/dashboard')
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = async (response: any) => {
+    setIsLoading(true)
+    try {
+      await authService.loginWithGoogle(response.credential)
+      toast.success('Logged in with Google successfully!')
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast.error('Google login failed: ' + (error.response?.data?.error || error.message))
     } finally {
       setIsLoading(false)
     }
@@ -45,6 +96,21 @@ export default function LoginPage() {
             </a>
           </p>
         </div>
+
+        {/* Google Sign-In Button */}
+        <div id="google-signin-button" className="flex justify-center"></div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+              Or continue with email
+            </span>
+          </div>
+        </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>

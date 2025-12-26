@@ -48,6 +48,32 @@ export const login = async (req, res, next) => {
   }
 };
 
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID token is required',
+      });
+    }
+
+    const { googleLoginUser } = await import('../services/authService.js');
+    const result = await googleLoginUser(idToken);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 export const getMe = async (req, res, next) => {
   try {
     const user = await getUserById(req.user.userId);

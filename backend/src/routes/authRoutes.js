@@ -3,6 +3,7 @@ import {
   register,
   login,
   getMe,
+  googleLogin,
   validateRegister,
   validateLogin,
 } from '../controllers/authController.js';
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.post('/register', validateRegister, register);
 router.post('/login', validateLogin, login);
+router.post('/google', googleLogin);
 router.get('/me', protect, getMe);
 
 export default router;

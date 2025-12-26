@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/lib/auth'
 import toast from 'react-hot-toast'
+
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -14,6 +15,44 @@ export default function RegisterPage() {
     confirmPassword: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    // Load Google Sign-In script
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    document.head.appendChild(script)
+
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Initialize Google Sign-In button after script loads
+    const initGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          callback: handleGoogleRegister,
+        })
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-signup-button'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            locale: 'en',
+            text: 'signup_with',
+          }
+        )
+      }
+    }
+
+    // Wait a bit for script to load
+    setTimeout(initGoogle, 100)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +84,19 @@ export default function RegisterPage() {
     }
   }
 
+  const handleGoogleRegister = async (response: any) => {
+    setIsLoading(true)
+    try {
+      await authService.loginWithGoogle(response.credential)
+      toast.success('Account created with Google successfully!')
+      router.push('/dashboard')
+    } catch (error: any) {
+      toast.error('Google signup failed: ' + (error.response?.data?.error || error.message))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -62,6 +114,21 @@ export default function RegisterPage() {
             </a>
           </p>
         </div>
+
+        {/* Google Sign-Up Button */}
+        <div id="google-signup-button" className="flex justify-center"></div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+              Or sign up with email
+            </span>
+          </div>
+        </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
