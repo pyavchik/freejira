@@ -1,0 +1,26 @@
+# 🔴 SERVER DOWN - FIX NOW!
+
+## SSH to Your Server:
+
+```bash
+ssh root@70.34.254.102
+```
+
+## Paste This Command:
+
+```bash
+pm2 kill 2>/dev/null || true && sleep 2 && systemctl restart mongod && systemctl restart nginx && sleep 5 && pm2 start npm --cwd ~/freyjira/backend --name "freyjira-backend" -- run start && pm2 start npm --cwd ~/freyjira/frontend --name "freyjira-frontend" -- start && sleep 15 && pm2 status
+```
+
+## Wait 20 Seconds
+
+## Test:
+
+```
+http://70.34.254.102/register
+```
+
+## ✅ Done!
+
+Both services should be online and working!
+

@@ -1,0 +1,42 @@
+# RUN THIS IN YOUR LOCAL TERMINAL
+
+## Command To Fix Your Server:
+
+```bash
+ssh -i ~/.ssh/freyjira root@70.34.254.102 'bash -s' << 'FIXSCRIPT'
+pm2 kill 2>/dev/null || true
+sleep 2
+systemctl restart mongod
+systemctl restart nginx
+sleep 5
+pm2 start npm --cwd ~/freyjira/backend --name "freyjira-backend" -- run start
+pm2 start npm --cwd ~/freyjira/frontend --name "freyjira-frontend" -- start
+sleep 15
+echo ""
+echo "✅ DONE! Check: http://70.34.254.102/register"
+echo ""
+pm2 status
+FIXSCRIPT
+```
+
+## Before Running:
+
+Make sure you have SSH key set up:
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/freyjira -N ""
+ssh-copy-id -i ~/.ssh/freyjira.pub root@70.34.254.102
+```
+
+## Then Run The Fix Command Above
+
+## Wait 40 Seconds
+
+## Test:
+
+```
+http://70.34.254.102/register
+```
+
+## Done! ✅
+

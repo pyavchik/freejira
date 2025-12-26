@@ -1,0 +1,22 @@
+# REBUILD & RUN - DO THIS NOW
+
+## On Your Server Terminal, Paste This:
+
+```bash
+pm2 stop all 2>/dev/null || true && cd ~/freyjira/backend && npm install && pm2 start npm --name "freyjira-backend" -- run start && cd ~/freyjira/frontend && cat > .env.local << 'EOF'
+NEXT_PUBLIC_API_URL=http://70.34.254.102:5000/api
+EOF
+npm install && npm run build && pm2 start npm --name "freyjira-frontend" -- start && sleep 15 && pm2 status
+```
+
+## ✅ Wait 5-7 Minutes
+
+Then test:
+```
+http://70.34.254.102/register
+```
+
+## 🎉 Done!
+
+Both services should be online and app working!
+
