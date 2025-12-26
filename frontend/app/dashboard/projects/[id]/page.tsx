@@ -160,7 +160,14 @@ export default function ProjectDetailPage() {
     }: {
       userStoryId: string
       updates: Partial<UserStory>
-    }) => userStoryService.update(userStoryId, updates),
+    }) => {
+      // Convert assignee object to ID string if present
+      const updateData: any = { ...updates }
+      if (updates.assignee && typeof updates.assignee === 'object') {
+        updateData.assignee = updates.assignee._id
+      }
+      return userStoryService.update(userStoryId, updateData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-stories', projectId] })
     },
