@@ -42,8 +42,14 @@ export default function TaskDetailPage() {
   const queryClient = useQueryClient()
 
   const updateMutation = useMutation({
-    mutationFn: (updates: Partial<Task>) =>
-      taskService.update(taskId, updates),
+    mutationFn: (updates: Partial<Task>) => {
+      // Convert assignee object to ID string if present
+      const updateData: any = { ...updates }
+      if (updates.assignee && typeof updates.assignee === 'object') {
+        updateData.assignee = updates.assignee._id
+      }
+      return taskService.update(taskId, updateData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['task', taskId] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
