@@ -43,9 +43,14 @@ export const login = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
+    // Provide user-friendly error message
+    const errorMessage = error.message === 'Invalid credentials' 
+      ? 'Invalid email or password. Please check your credentials and try again.'
+      : error.message;
+    
     res.status(401).json({
       success: false,
-      error: error.message,
+      error: errorMessage,
     });
   }
 };

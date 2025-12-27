@@ -13,6 +13,7 @@ export default function LoginPage() {
     password: '',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -94,13 +95,34 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
       await authService.login(formData.email, formData.password)
       toast.success('Logged in successfully!')
       router.push('/dashboard')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Login failed')
+      // Get user-friendly error message
+      let errorMessage = 'Login failed. Please check your email and password.'
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password. Please try again.'
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.errors?.[0]?.msg || error.response?.data?.error || errorMessage
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setError(errorMessage)
+      toast.error(errorMessage, {
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: '#fff',
+        },
+      })
     } finally {
       setIsLoading(false)
     }
@@ -160,6 +182,31 @@ export default function LoginPage() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -171,12 +218,17 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800 dark:text-white ${
+                  error
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
                 placeholder="Email address"
                 value={formData.email}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value })
-                }
+                  setError(null)
+                }}
               />
             </div>
             <div>
@@ -189,12 +241,17 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-800 dark:text-white ${
+                  error
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
                 placeholder="Password"
                 value={formData.password}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({ ...formData, password: e.target.value })
-                }
+                  setError(null)
+                }}
               />
             </div>
           </div>
