@@ -5,7 +5,12 @@ import { sendPasswordResetEmail } from '../utils/emailService.js';
 import crypto from 'crypto';
 
 export const registerUser = async (userData) => {
-  const { name, email, password } = userData;
+  const { name, email, password, acceptedTerms } = userData;
+
+  // Validate terms acceptance
+  if (!acceptedTerms) {
+    throw new Error('You must accept Terms and Conditions to register');
+  }
 
   // Check if user exists
   const userExists = await User.findOne({ email });
@@ -18,6 +23,7 @@ export const registerUser = async (userData) => {
     name,
     email,
     password,
+    acceptedTerms: true,
   });
 
   const token = generateToken(user._id);
