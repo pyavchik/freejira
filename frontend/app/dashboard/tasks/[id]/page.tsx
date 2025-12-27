@@ -110,7 +110,7 @@ export default function TaskDetailPage() {
   }
 
   const handleSave = () => {
-    updateMutation.mutate(editData)
+    updateMutation.mutate(editData as any)
   }
 
   const handleCommentSubmit = (e: React.FormEvent) => {
