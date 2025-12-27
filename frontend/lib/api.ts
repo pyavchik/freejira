@@ -29,10 +29,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      Cookies.remove('token')
-      Cookies.remove('refreshToken')
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
+      // Don't redirect if we're already on login/register page or if it's a login/register request
+      const isAuthRequest = error.config?.url?.includes('/auth/login') || 
+                           error.config?.url?.includes('/auth/register') ||
+                           error.config?.url?.includes('/auth/google')
+      const isOnAuthPage = typeof window !== 'undefined' && 
+                          (window.location.pathname === '/login' || 
+                           window.location.pathname === '/register')
+      
+      // Only redirect if it's not an auth request and we're not already on an auth page
+      if (!isAuthRequest && !isOnAuthPage) {
+        Cookies.remove('token')
+        Cookies.remove('refreshToken')
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(error)
