@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { generateToken, generateRefreshToken } from '../utils/generateToken.js';
 import { verifyGoogleToken } from '../utils/googleAuth.js';
+import { sendPasswordResetEmail } from '../utils/emailService.js';
 import crypto from 'crypto';
 
 export const registerUser = async (userData) => {
@@ -136,17 +137,17 @@ export const forgotPassword = async (email) => {
   const resetToken = user.getResetPasswordToken();
   await user.save({ validateBeforeSave: false });
 
-  // In production, send email here
-  // For now, we'll return the token (in production, send via email)
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
-
-  // TODO: Send email with resetUrl
-  // For development, we can log it or return it
-  console.log('Password reset URL:', resetUrl);
+  // Send password reset email
+  try {
+    await sendPasswordResetEmail(user.email, resetToken);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    // Don't throw - we still want to return success message for security
+  }
 
   return {
     message: 'If that email exists, a password reset link has been sent.',
-    resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined, // Only in dev
+    resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined, // Only in dev for testing
   };
 };
 
