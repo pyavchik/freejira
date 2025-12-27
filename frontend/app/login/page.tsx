@@ -135,6 +135,14 @@ export default function LoginPage() {
               create a new account
             </a>
           </p>
+          <p className="mt-1 text-center text-sm">
+            <a
+              href="/forgot-password"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Forgot your password?
+            </a>
+          </p>
         </div>
 
         {/* Google Sign-In Button */}

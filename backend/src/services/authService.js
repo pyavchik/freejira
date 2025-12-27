@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { generateToken, generateRefreshToken } from '../utils/generateToken.js';
 import { verifyGoogleToken } from '../utils/googleAuth.js';
+import crypto from 'crypto';
 
 export const registerUser = async (userData) => {
   const { name, email, password } = userData;
@@ -96,16 +97,80 @@ export const googleLoginUser = async (idToken) => {
       await user.save();
     }
   } else {
-    // Create new user
+    // Create new user (no password needed for OAuth users)
     user = await User.create({
       name,
       email,
       provider: 'google',
       providerId: googleId,
       avatar: picture || '',
-      password: Math.random().toString(36).slice(-8), // Random password for OAuth users
+      // No password field - it's optional for OAuth users
     });
   }
+
+  const token = generateToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role: user.role,
+    },
+    token,
+    refreshToken,
+  };
+};
+
+export const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    // Don't reveal if user exists for security
+    return { message: 'If that email exists, a password reset link has been sent.' };
+  }
+
+  // Get reset token
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  // In production, send email here
+  // For now, we'll return the token (in production, send via email)
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+
+  // TODO: Send email with resetUrl
+  // For development, we can log it or return it
+  console.log('Password reset URL:', resetUrl);
+
+  return {
+    message: 'If that email exists, a password reset link has been sent.',
+    resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined, // Only in dev
+  };
+};
+
+export const resetPassword = async (resetToken, password) => {
+  // Get hashed token
+  const resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new Error('Invalid or expired reset token');
+  }
+
+  // Set new password
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
 
   const token = generateToken(user._id);
   const refreshToken = generateRefreshToken(user._id);

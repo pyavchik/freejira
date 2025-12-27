@@ -22,9 +22,16 @@ export const authService = {
       { name, email, password }
     )
     if (response.data.success) {
-      Cookies.set('token', response.data.data.token, { expires: 7 })
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      Cookies.set('token', response.data.data.token, { 
+        expires: 7,
+        secure: isSecure,
+        sameSite: 'strict'
+      })
       Cookies.set('refreshToken', response.data.data.refreshToken, {
         expires: 30,
+        secure: isSecure,
+        sameSite: 'strict'
       })
     }
     return response.data.data
@@ -36,9 +43,16 @@ export const authService = {
       { email, password }
     )
     if (response.data.success) {
-      Cookies.set('token', response.data.data.token, { expires: 7 })
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      Cookies.set('token', response.data.data.token, { 
+        expires: 7,
+        secure: isSecure,
+        sameSite: 'strict'
+      })
       Cookies.set('refreshToken', response.data.data.refreshToken, {
         expires: 30,
+        secure: isSecure,
+        sameSite: 'strict'
       })
     }
     return response.data.data
@@ -50,9 +64,16 @@ export const authService = {
       { idToken }
     )
     if (response.data.success) {
-      Cookies.set('token', response.data.data.token, { expires: 7 })
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      Cookies.set('token', response.data.data.token, { 
+        expires: 7,
+        secure: isSecure,
+        sameSite: 'strict'
+      })
       Cookies.set('refreshToken', response.data.data.refreshToken, {
         expires: 30,
+        secure: isSecure,
+        sameSite: 'strict'
       })
     }
     return response.data.data
@@ -75,6 +96,35 @@ export const authService = {
 
   isAuthenticated: () => {
     return !!Cookies.get('token')
+  },
+
+  forgotPassword: async (email: string) => {
+    const response = await api.post<{ success: boolean; data: { message: string; resetToken?: string } }>(
+      '/auth/forgot-password',
+      { email }
+    )
+    return response.data.data
+  },
+
+  resetPassword: async (resetToken: string, password: string) => {
+    const response = await api.post<{ success: boolean; data: AuthResponse }>(
+      '/auth/reset-password',
+      { resetToken, password }
+    )
+    if (response.data.success) {
+      const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      Cookies.set('token', response.data.data.token, { 
+        expires: 7,
+        secure: isSecure,
+        sameSite: 'strict'
+      })
+      Cookies.set('refreshToken', response.data.data.refreshToken, {
+        expires: 30,
+        secure: isSecure,
+        sameSite: 'strict'
+      })
+    }
+    return response.data.data
   },
 }
 
