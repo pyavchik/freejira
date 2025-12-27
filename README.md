@@ -7,7 +7,7 @@ A complete Jira-like task management web application built with Next.js, Express
 - **User Authentication**: Register, login with JWT tokens
 - **Workspaces & Projects**: Organize work into workspaces and projects
 - **Kanban Board**: Drag-and-drop task management with Todo, In Progress, Done columns
-- **Task Management**: Create, update, delete tasks with priorities, assignees, and subtasks
+- **Task Management**: Create, update, delete tasks with priorities, assignees, and subtasks (assignees must be project members)
 - **Comments**: Add comments to tasks
 - **Activity Log**: Track all task activities
 - **User Roles**: Owner, Admin, User roles for workspaces
@@ -259,4 +259,3 @@ MIT
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-

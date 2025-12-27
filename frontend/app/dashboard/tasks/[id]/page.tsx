@@ -8,6 +8,7 @@ import {
   Task,
   Comment,
   Activity,
+  projectService,
 } from '@/lib/api-services'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -27,6 +28,12 @@ export default function TaskDetailPage() {
     queryFn: () => taskService.getById(taskId),
   })
 
+  const { data: project } = useQuery({
+    queryKey: ['project', task?.project._id],
+    queryFn: () => projectService.getById(task!.project._id),
+    enabled: !!task?.project._id,
+  })
+
   const { data: comments, isLoading: commentsLoading } = useQuery({
     queryKey: ['comments', taskId],
     queryFn: () => commentService.getAll(taskId),
@@ -38,6 +45,8 @@ export default function TaskDetailPage() {
     queryFn: () => activityService.getAll(taskId),
     enabled: !!taskId,
   })
+
+  const projectMembers = project?.members || []
 
   const queryClient = useQueryClient()
 
@@ -94,6 +103,7 @@ export default function TaskDetailPage() {
         description: task.description,
         status: task.status,
         priority: task.priority,
+        assignee: task.assignee?._id,
       })
       setIsEditing(true)
     }
@@ -127,6 +137,8 @@ export default function TaskDetailPage() {
       </div>
     )
   }
+
+  const assigneeInitial = task.assignee?.name.charAt(0).toUpperCase()
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -252,9 +264,27 @@ export default function TaskDetailPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Assignee
             </label>
-            <p className="text-gray-900 dark:text-white">
-              {task.assignee ? task.assignee.name : 'Unassigned'}
-            </p>
+            {isEditing ? (
+              <select
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                value={(editData.assignee as any) || ''}
+                onChange={(e) =>
+                  setEditData({ ...editData, assignee: e.target.value || undefined })
+                }
+                disabled={!projectMembers.length}
+              >
+                <option value="">Unassigned</option>
+                {projectMembers.map((u) => (
+                  <option key={u._id} value={u._id}>
+                    {u.name} ({u.email})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-gray-900 dark:text-white">
+                {task.assignee ? task.assignee.name : 'Unassigned'}
+              </p>
+            )}
           </div>
         </div>
 

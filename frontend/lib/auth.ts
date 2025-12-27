@@ -16,10 +16,10 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  register: async (name: string, email: string, password: string) => {
+  register: async (name: string, email: string, password: string, acceptedTerms: boolean = false) => {
     const response = await api.post<{ success: boolean; data: AuthResponse }>(
       '/auth/register',
-      { name, email, password }
+      { name, email, password, acceptedTerms }
     )
     if (response.data.success) {
       const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:'

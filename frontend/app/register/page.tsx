@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/lib/auth'
 import toast from 'react-hot-toast'
+import TermsAndConditions from '@/components/TermsAndConditions'
 
 
 export default function RegisterPage() {
@@ -13,8 +14,10 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    acceptedTerms: false,
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
 
   useEffect(() => {
     // Load Google Sign-In script
@@ -67,13 +70,19 @@ export default function RegisterPage() {
       return
     }
 
+    if (!formData.acceptedTerms) {
+      toast.error('You must accept Terms and Conditions to register')
+      return
+    }
+
     setIsLoading(true)
 
     try {
       await authService.register(
         formData.name,
         formData.email,
-        formData.password
+        formData.password,
+        formData.acceptedTerms
       )
       toast.success('Account created successfully!')
       router.push('/dashboard')
@@ -204,6 +213,33 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Terms and Conditions Checkbox */}
+          <div className="flex items-start">
+            <input
+              id="terms"
+              name="terms"
+              type="checkbox"
+              checked={formData.acceptedTerms}
+              onChange={(e) =>
+                setFormData({ ...formData, acceptedTerms: e.target.checked })
+              }
+              className="h-4 w-4 mt-1 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="terms"
+              className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+            >
+              I agree to the{' '}
+              <button
+                type="button"
+                onClick={() => setShowTerms(true)}
+                className="text-primary-600 hover:text-primary-500 font-medium underline"
+              >
+                Terms and Conditions
+              </button>
+            </label>
+          </div>
+
           <div>
             <button
               type="submit"
@@ -214,6 +250,9 @@ export default function RegisterPage() {
             </button>
           </div>
         </form>
+
+        {/* Terms Modal */}
+        <TermsAndConditions isOpen={showTerms} onClose={() => setShowTerms(false)} />
       </div>
     </div>
   )
