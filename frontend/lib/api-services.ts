@@ -301,6 +301,13 @@ export const taskService = {
     )
     return response.data.data
   },
+
+  getMy: async (): Promise<Task[]> => {
+    const response = await api.get<{ success: boolean; data: Task[] }>(
+      '/tasks/my'
+    )
+    return response.data.data
+  },
 }
 
 export const commentService = {
@@ -411,3 +418,11 @@ export const userStoryService = {
   },
 }
 
+export const usersService = {
+  getAll: async (): Promise<Array<{ _id: string; name: string; email: string; avatar?: string; role?: string }>> => {
+    const response = await api.get<{ success: boolean; data: any[] }>(
+      '/users'
+    )
+    return response.data.data
+  },
+}

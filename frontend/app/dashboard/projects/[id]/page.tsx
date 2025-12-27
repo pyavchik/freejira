@@ -5,6 +5,7 @@ import {
   projectService,
   taskService,
   userStoryService,
+  usersService,
   Task,
   UserStory,
 } from '@/lib/api-services'
@@ -14,6 +15,7 @@ import { UserStoryBoard } from '@/components/UserStoryBoard'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 import Link from 'next/link'
+import api from '@/lib/api'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -21,10 +23,12 @@ export default function ProjectDetailPage() {
   const [activeTab, setActiveTab] = useState<'tasks' | 'user-stories'>('tasks')
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isUserStoryModalOpen, setIsUserStoryModalOpen] = useState(false)
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [taskFormData, setTaskFormData] = useState({
     title: '',
     description: '',
     priority: 'medium' as Task['priority'],
+    assignee: '' as string,
   })
   const [userStoryFormData, setUserStoryFormData] = useState({
     title: '',
@@ -32,11 +36,14 @@ export default function ProjectDetailPage() {
     priority: 'medium' as UserStory['priority'],
     storyPoints: 0,
   })
+  const [selectedUserId, setSelectedUserId] = useState('')
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => projectService.getById(projectId),
   })
+
+  const projectMembers = project?.members || []
 
   const { data: tasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', projectId],
@@ -50,6 +57,11 @@ export default function ProjectDetailPage() {
     enabled: !!projectId,
   })
 
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersService.getAll(),
+  })
+
   const queryClient = useQueryClient()
 
   const createTaskMutation = useMutation({
@@ -58,12 +70,13 @@ export default function ProjectDetailPage() {
       description?: string
       project: string
       priority?: string
+      assignee?: string
     }) => taskService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
       toast.success('Task created!')
       setIsTaskModalOpen(false)
-      setTaskFormData({ title: '', description: '', priority: 'medium' })
+      setTaskFormData({ title: '', description: '', priority: 'medium', assignee: '' })
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to create task')
@@ -129,12 +142,29 @@ export default function ProjectDetailPage() {
     },
   })
 
+  const addUserMutation = useMutation({
+    mutationFn: () => api.post(`/projects/${projectId}/add-user`, { userId: selectedUserId }),
+    onSuccess: () => {
+      setIsAddUserModalOpen(false)
+      setSelectedUserId('')
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+      toast.success('User added to project!')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to add user')
+    },
+  })
+
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    createTaskMutation.mutate({
+    const payload: any = {
       ...taskFormData,
       project: projectId,
-    })
+    }
+    if (!payload.assignee) {
+      delete payload.assignee
+    }
+    createTaskMutation.mutate(payload)
   }
 
   const handleUserStorySubmit = (e: React.FormEvent) => {
@@ -232,30 +262,54 @@ export default function ProjectDetailPage() {
               {project?.key} • {tasks?.length || 0} tasks •{' '}
               {userStories?.length || 0} user stories
             </p>
+            {project?.members && project.members.length > 0 && (
+              <div className="mt-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Members</h3>
+                <ul className="mt-1 flex flex-wrap gap-2">
+                  {project.members.map((m) => (
+                    <li key={m._id} className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded px-2 py-1">
+                      <div className="w-6 h-6 rounded-full bg-primary-500 text-white text-xs font-medium flex items-center justify-center">
+                        {m.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm text-gray-800 dark:text-gray-200">{m.name}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{m.email}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          <button
-            onClick={() =>
-              activeTab === 'tasks'
-                ? setIsTaskModalOpen(true)
-                : setIsUserStoryModalOpen(true)
-            }
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center">
+            <button
+              onClick={() =>
+                activeTab === 'tasks'
+                  ? setIsTaskModalOpen(true)
+                  : setIsUserStoryModalOpen(true)
+              }
+              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            New {activeTab === 'tasks' ? 'Task' : 'User Story'}
-          </button>
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New {activeTab === 'tasks' ? 'Task' : 'User Story'}
+            </button>
+            <button
+              onClick={() => setIsAddUserModalOpen(true)}
+              className="ml-3 inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Add User to Project
+            </button>
+          </div>
         </div>
         <div className="mt-4 border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8">
@@ -339,6 +393,31 @@ export default function ProjectDetailPage() {
                   <option value="high">High</option>
                   <option value="critical">Critical</option>
                 </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Assign To (optional)
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={taskFormData.assignee}
+                  onChange={(e) =>
+                    setTaskFormData({ ...taskFormData, assignee: e.target.value })
+                  }
+                  disabled={!projectMembers.length}
+                >
+                  <option value="">Unassigned</option>
+                  {projectMembers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+                </select>
+                {!projectMembers.length && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Add project members to enable assignment.
+                  </p>
+                )}
               </div>
               <div className="flex justify-end space-x-3">
                 <button
@@ -455,6 +534,50 @@ export default function ProjectDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isAddUserModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Add User to Project
+            </h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select User
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+              >
+                <option value="">Select a user</option>
+                {users?.map((u) => (
+                  <option key={u._id} value={u._id}>
+                    {u.name} ({u.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsAddUserModalOpen(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={addUserMutation.isPending || !selectedUserId}
+                onClick={() => addUserMutation.mutate()}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+              >
+                {addUserMutation.isPending ? 'Adding...' : 'Add User'}
+              </button>
+            </div>
           </div>
         </div>
       )}
