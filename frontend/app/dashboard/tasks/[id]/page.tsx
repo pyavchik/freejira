@@ -21,7 +21,7 @@ export default function TaskDetailPage() {
   const taskId = params.id as string
   const [commentText, setCommentText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<Partial<Task>>({})
+  const [editData, setEditData] = useState<Partial<Task> & { assignee?: string }>({})
 
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
