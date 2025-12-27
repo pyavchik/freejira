@@ -7,12 +7,15 @@ import {
   deleteTask,
   updateTaskPositions,
   validateTask,
+  getMyTasks,
 } from '../controllers/taskController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(protect);
+
+router.get('/my', getMyTasks);
 
 router
   .route('/project/:projectId')
@@ -28,4 +31,3 @@ router
 router.put('/positions/update', updateTaskPositions);
 
 export default router;
-

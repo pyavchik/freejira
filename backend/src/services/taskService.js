@@ -1,12 +1,52 @@
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
 import Activity from '../models/Activity.js';
+import User from '../models/User.js';
+
+const memberIds = (project) => {
+  const members = project?.members || [];
+  return members.map((m) => (m && m._id ? m._id.toString() : m.toString()));
+};
+
+const isProjectMember = (project, userId) => {
+  if (!project) return false;
+  if (project.lead && project.lead.toString() === userId.toString()) return true;
+  return memberIds(project).includes(userId.toString());
+};
 
 export const createTask = async (taskData, userId) => {
+  console.log('[taskService.createTask] input', { project: taskData.project, userId, assignee: taskData.assignee, title: taskData.title });
   // Verify user has access to project
-  const project = await Project.findById(taskData.project);
+  const project = await Project.findById(taskData.project).populate('members');
   if (!project) {
-    throw new Error('Project not found');
+    const err = new Error('Project not found');
+    err.statusCode = 404;
+    console.warn('[taskService.createTask] project not found', { projectId: taskData.project });
+    throw err;
+  }
+  if (!isProjectMember(project, userId)) {
+    const err = new Error('Access denied to project');
+    err.statusCode = 403;
+    console.warn('[taskService.createTask] access denied', { projectId: taskData.project, userId });
+    throw err;
+  }
+
+  // Validate assignee exists and is a project member if provided
+  if (taskData.assignee) {
+    const assignee = await User.findById(taskData.assignee);
+    if (!assignee) {
+      const err = new Error('Assignee not found');
+      err.statusCode = 404;
+      console.warn('[taskService.createTask] assignee not found', { assigneeId: taskData.assignee });
+      throw err;
+    }
+    const isMember = memberIds(project).includes(taskData.assignee.toString());
+    if (!isMember) {
+      const err = new Error('Assignee must be a project member');
+      err.statusCode = 400;
+      console.warn('[taskService.createTask] assignee not a member', { assigneeId: taskData.assignee, projectId: project._id, memberIds: memberIds(project) });
+      throw err;
+    }
   }
 
   const task = await Task.create({
@@ -22,6 +62,19 @@ export const createTask = async (taskData, userId) => {
     description: `Task "${task.title}" was created`,
   });
 
+  // If assigned on creation, log it
+  if (task.assignee) {
+    await Activity.create({
+      type: 'task_assigned',
+      task: task._id,
+      user: userId,
+      description: 'Task was assigned',
+      metadata: { assignee: task.assignee },
+    });
+  }
+
+  console.log('[taskService.createTask] created', { taskId: task._id });
+
   return await Task.findById(task._id)
     .populate('project', 'name key')
     .populate('assignee', 'name email avatar')
@@ -30,9 +83,16 @@ export const createTask = async (taskData, userId) => {
 
 export const getTasks = async (projectId, userId) => {
   // Verify user has access to project
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate('members');
   if (!project) {
-    throw new Error('Project not found');
+    const err = new Error('Project not found');
+    err.statusCode = 404;
+    throw err;
+  }
+  if (!isProjectMember(project, userId)) {
+    const err = new Error('Access denied to project');
+    err.statusCode = 403;
+    throw err;
   }
 
   return await Task.find({ project: projectId })
@@ -49,21 +109,62 @@ export const getTaskById = async (taskId, userId) => {
     .populate('reporter', 'name email avatar');
 
   if (!task) {
-    throw new Error('Task not found');
+    const err = new Error('Task not found');
+    err.statusCode = 404;
+    throw err;
   }
 
   // Verify user has access to project
-  const project = await Project.findById(task.project._id);
+  const project = await Project.findById(task.project._id).populate('members');
   if (!project) {
-    throw new Error('Project not found');
+    const err = new Error('Project not found');
+    err.statusCode = 404;
+    throw err;
+  }
+  if (!isProjectMember(project, userId)) {
+    const err = new Error('Access denied to project');
+    err.statusCode = 403;
+    throw err;
   }
 
   return task;
 };
 
 export const updateTask = async (taskId, updateData, userId) => {
+  console.log('[taskService.updateTask] input', { taskId, userId, assignee: updateData.assignee, status: updateData.status });
   const task = await getTaskById(taskId, userId);
+  const project = await Project.findById(task.project._id).populate('members');
   const oldStatus = task.status;
+  const oldAssignee = task.assignee ? task.assignee.toString() : null;
+
+  if (!isProjectMember(project, userId)) {
+    const err = new Error('Access denied to project');
+    err.statusCode = 403;
+    console.warn('[taskService.updateTask] access denied', { projectId: project._id, userId });
+    throw err;
+  }
+
+  // Validate assignee exists and is a project member if provided (including clearing)
+  if (Object.prototype.hasOwnProperty.call(updateData, 'assignee')) {
+    if (updateData.assignee) {
+      const assignee = await User.findById(updateData.assignee);
+      if (!assignee) {
+        const err = new Error('Assignee not found');
+        err.statusCode = 404;
+        console.warn('[taskService.updateTask] assignee not found', { assigneeId: updateData.assignee });
+        throw err;
+      }
+      const isMember = memberIds(project).includes(updateData.assignee.toString());
+      if (!isMember) {
+        const err = new Error('Assignee must be a project member');
+        err.statusCode = 400;
+        console.warn('[taskService.updateTask] assignee not a member', { assigneeId: updateData.assignee, projectId: project._id, memberIds: memberIds(project) });
+        throw err;
+      }
+    } else {
+      console.log('[taskService.updateTask] unassigning task', { taskId });
+    }
+  }
 
   Object.assign(task, updateData);
   await task.save();
@@ -82,21 +183,23 @@ export const updateTask = async (taskId, updateData, userId) => {
     });
   }
 
-  // Create activity log for assignment
-  if (updateData.assignee && updateData.assignee !== task.assignee?.toString()) {
+  // Create activity log for assignment change (including unassign)
+  const newAssignee = task.assignee ? task.assignee.toString() : null;
+  if (Object.prototype.hasOwnProperty.call(updateData, 'assignee') && newAssignee !== oldAssignee) {
     await Activity.create({
       type: 'task_assigned',
       task: task._id,
       user: userId,
-      description: `Task was assigned`,
+      description: 'Task assignment updated',
       metadata: {
-        assignee: updateData.assignee,
+        oldAssignee,
+        newAssignee,
       },
     });
   }
 
   // Create activity log for general update
-  if (!updateData.status && !updateData.assignee) {
+  if (!updateData.status && !Object.prototype.hasOwnProperty.call(updateData, 'assignee')) {
     await Activity.create({
       type: 'task_updated',
       task: task._id,
@@ -104,6 +207,8 @@ export const updateTask = async (taskId, updateData, userId) => {
       description: `Task was updated`,
     });
   }
+
+  console.log('[taskService.updateTask] updated', { taskId });
 
   return await Task.findById(task._id)
     .populate('project', 'name key')
@@ -138,3 +243,13 @@ export const updateTaskPositions = async (tasks, userId) => {
     .populate('reporter', 'name email avatar');
 };
 
+export const getTasksByAssignee = async (assigneeId) => {
+  console.log('[taskService.getTasksByAssignee] input', { assigneeId });
+  const tasks = await Task.find({ assignee: assigneeId })
+    .populate('project', 'name key')
+    .populate('assignee', 'name email avatar')
+    .populate('reporter', 'name email avatar')
+    .sort({ createdAt: -1 });
+  console.log('[taskService.getTasksByAssignee] found', { count: tasks.length });
+  return tasks;
+};

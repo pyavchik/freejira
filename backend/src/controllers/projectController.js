@@ -120,3 +120,25 @@ export const validateProject = [
     .withMessage('Invalid workspace ID'),
 ];
 
+export const addUserToProject = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const project = await projectService.addUserToProject(
+      req.params.projectId,
+      req.body.userId,
+      req.user.userId
+    );
+
+    res.status(200).json({ success: true, data: project });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const validateAddUser = [
+  body('userId').notEmpty().withMessage('userId is required').isMongoId().withMessage('Invalid user ID'),
+];

@@ -6,6 +6,8 @@ import {
   updateProject,
   deleteProject,
   validateProject,
+  addUserToProject,
+  validateAddUser,
 } from '../controllers/projectController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -20,6 +22,8 @@ router
 
 router.post('/', validateProject, createProject);
 
+router.post('/:projectId/add-user', validateAddUser, addUserToProject);
+
 router
   .route('/:id')
   .get(getProject)
@@ -27,4 +31,3 @@ router
   .delete(deleteProject);
 
 export default router;
-
