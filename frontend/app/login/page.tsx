@@ -15,40 +15,80 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    // Load Google Sign-In script
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    document.head.appendChild(script)
-
-    return () => {
-      document.head.removeChild(script)
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    
+    // Don't proceed if no client ID
+    if (!clientId || clientId === 'undefined') {
+      const buttonElement = document.getElementById('google-signin-button')
+      if (buttonElement) {
+        buttonElement.style.display = 'none'
+      }
+      return
     }
-  }, [])
 
-  useEffect(() => {
+    // Check if script already exists
+    let script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]') as HTMLScriptElement
+    
+    if (!script) {
+      // Load Google Sign-In script
+      script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+    }
+
     // Initialize Google Sign-In button after script loads
     const initGoogle = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-          callback: handleGoogleLogin,
-        })
-        window.google.accounts.id.renderButton(
-          document.getElementById('google-signin-button'),
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            locale: 'en',
+      try {
+        if (typeof window !== 'undefined' && (window as any).google && (window as any).google.accounts && (window as any).google.accounts.id) {
+          (window as any).google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleGoogleLogin,
+          })
+          
+          const buttonElement = document.getElementById('google-signin-button')
+          if (buttonElement && !buttonElement.hasChildNodes()) {
+            (window as any).google.accounts.id.renderButton(buttonElement, {
+              theme: 'outline',
+              size: 'large',
+              width: '300',
+              locale: 'en',
+            })
           }
-        )
+        }
+      } catch (error) {
+        console.error('Google Sign-In initialization failed:', error)
+        const buttonElement = document.getElementById('google-signin-button')
+        if (buttonElement) {
+          buttonElement.style.display = 'none'
+        }
+      }
+    }
+    
+    // If script already loaded, initialize immediately
+    if ((window as any).google && (window as any).google.accounts) {
+      initGoogle()
+    } else {
+      // Wait for script to load
+      script.onload = () => {
+        initGoogle()
+        // Retry after a short delay in case of timing issues
+        setTimeout(initGoogle, 500)
+      }
+      
+      script.onerror = () => {
+        console.error('Failed to load Google Sign-In script')
+        const buttonElement = document.getElementById('google-signin-button')
+        if (buttonElement) {
+          buttonElement.style.display = 'none'
+        }
       }
     }
 
-    // Wait a bit for script to load
-    setTimeout(initGoogle, 100)
+    return () => {
+      // Cleanup is handled by React
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,8 +138,8 @@ export default function LoginPage() {
         </div>
 
         {/* Google Sign-In Button */}
-        <div id="google-signin-button" className="flex justify-center"></div>
-
+        <div id="google-signin-button" className="flex justify-center mb-4"></div>
+        
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
