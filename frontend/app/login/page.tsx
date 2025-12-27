@@ -117,11 +117,13 @@ export default function LoginPage() {
       
       setError(errorMessage)
       toast.error(errorMessage, {
-        duration: 4000,
+        duration: 8000, // Show for 8 seconds (longer)
         style: {
           background: '#ef4444',
           color: '#fff',
         },
+        // Don't auto-dismiss on click - user must click X
+        id: 'login-error', // Use same ID to prevent duplicates
       })
     } finally {
       setIsLoading(false)
@@ -183,7 +185,7 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 animate-in fade-in slide-in-from-top-2">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg
@@ -198,10 +200,30 @@ export default function LoginPage() {
                     />
                   </svg>
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">
                     {error}
                   </p>
+                </div>
+                <div className="ml-auto pl-3">
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="inline-flex rounded-md bg-red-50 dark:bg-red-900/20 p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50"
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -227,7 +249,7 @@ export default function LoginPage() {
                 value={formData.email}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value })
-                  setError(null)
+                  // Don't clear error immediately - let user see it
                 }}
               />
             </div>
@@ -250,7 +272,7 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={(e) => {
                   setFormData({ ...formData, password: e.target.value })
-                  setError(null)
+                  // Don't clear error immediately - let user see it
                 }}
               />
             </div>
