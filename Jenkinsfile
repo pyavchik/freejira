@@ -66,17 +66,17 @@ pipeline {
                             backend/ frontend/ docker-compose.yml
                     '''
                     
-                    // Copy to server
-                    sshagent(credentials: ['freejira-deploy-ssh']) {
+                    // Copy to server using SSH credentials
+                    withCredentials([sshUserPrivateKey(credentialsId: 'freejira-deploy-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            scp -o StrictHostKeyChecking=no /tmp/freejira-deploy.tar.gz ${SERVER_USER}@${SERVER_IP}:/tmp/freejira-deploy.tar.gz
+                            scp -i \$SSH_KEY -o StrictHostKeyChecking=no /tmp/freejira-deploy.tar.gz \${SSH_USER}@${SERVER_IP}:/tmp/freejira-deploy.tar.gz
                         """
                     }
                     
                     // Extract and deploy on server
-                    sshagent(credentials: ['freejira-deploy-ssh']) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'freejira-deploy-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'ENDSSH'
+                            ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@${SERVER_IP} << 'ENDSSH'
 set -e
 cd ${DEPLOY_PATH}
 mkdir -p backend frontend
@@ -92,9 +92,9 @@ ENDSSH
         
         stage('Install Server Dependencies') {
             steps {
-                sshagent(credentials: ['freejira-deploy-ssh']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'freejira-deploy-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'ENDSSH'
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@${SERVER_IP} << 'ENDSSH'
 set -e
 cd ${DEPLOY_PATH}/backend
 if [ ! -d "node_modules" ]; then
@@ -115,9 +115,9 @@ ENDSSH
         
         stage('Restart Services') {
             steps {
-                sshagent(credentials: ['freejira-deploy-ssh']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'freejira-deploy-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_IP} << 'ENDSSH'
+                        ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@${SERVER_IP} << 'ENDSSH'
 set -e
 cd ${DEPLOY_PATH}/frontend
 echo "Rebuilding frontend..."
