@@ -77,15 +77,25 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
             }
             .button {
               display: inline-block;
-              padding: 12px 24px;
+              padding: 14px 28px;
               background-color: #4F46E5;
-              color: white;
+              color: #FFFFFF !important;
               text-decoration: none;
-              border-radius: 5px;
+              border-radius: 6px;
               margin: 20px 0;
+              font-size: 16px;
+              font-weight: bold;
+              text-align: center;
+              border: 2px solid #4F46E5;
             }
             .button:hover {
               background-color: #4338CA;
+              border-color: #4338CA;
+            }
+            .button-text {
+              color: #FFFFFF !important;
+              text-decoration: none;
+              font-weight: bold;
             }
             .footer {
               margin-top: 20px;
@@ -102,10 +112,14 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
               <h1>FreeJira</h1>
             </div>
             <div class="content">
-              <h2>Password Reset Request</h2>
-              <p>You requested to reset your password for your FreeJira account.</p>
-              <p>Click the button below to reset your password:</p>
-              <a href="${resetUrl}" class="button">Reset Password</a>
+              <h2 style="color: #1f2937; margin-bottom: 20px;">Password Reset Request</h2>
+              <p style="color: #374151; margin-bottom: 15px;">You requested to reset your password for your FreeJira account.</p>
+              <p style="color: #374151; margin-bottom: 20px;">Click the button below to reset your password:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="display: inline-block; padding: 16px 32px; background-color: #4F46E5; color: #FFFFFF !important; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  Reset Password
+                </a>
+              </div>
               <p>Or copy and paste this link into your browser:</p>
               <p style="word-break: break-all; color: #4F46E5;">${resetUrl}</p>
               <p><strong>This link will expire in 10 minutes.</strong></p>
