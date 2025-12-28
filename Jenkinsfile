@@ -47,47 +47,6 @@ pipeline {
             }
         }
         
-        stage('Setup Environment') {
-            steps {
-                script {
-                    echo 'Setting up remote environment...'
-                    withCredentials([
-                        string(credentialsId: 'MONGO_URI', variable: 'MONGO_URI'),
-                        string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
-                        string(credentialsId: 'JWT_EXPIRE', variable: 'JWT_EXPIRE'),
-                        string(credentialsId: 'GOOGLE_CLIENT_ID', variable: 'GOOGLE_CLIENT_ID'),
-                        string(credentialsId: 'GOOGLE_CLIENT_SECRET', variable: 'GOOGLE_CLIENT_SECRET'),
-                        string(credentialsId: 'EMAIL_HOST', variable: 'EMAIL_HOST'),
-                        string(credentialsId: 'EMAIL_PORT', variable: 'EMAIL_PORT'),
-                        string(credentialsId: 'EMAIL_USER', variable: 'EMAIL_USER'),
-                        string(credentialsId: 'EMAIL_PASS', variable: 'EMAIL_PASS'),
-                        string(credentialsId: 'FRONTEND_URL', variable: 'FRONTEND_URL')
-                    ]) {
-                        withCredentials([sshUserPrivateKey(credentialsId: 'freejira-deploy-ssh', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-                            sh """
-                                ssh -i \$SSH_KEY -o StrictHostKeyChecking=no \${SSH_USER}@\${SERVER_IP} << 'ENDSSH'
-set -e
-cat << EOF > ${DEPLOY_PATH}/backend/.env
-MONGO_URI=${MONGO_URI}
-JWT_SECRET=${JWT_SECRET}
-JWT_EXPIRE=${JWT_EXPIRE}
-GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-EMAIL_HOST=${EMAIL_HOST}
-EMAIL_PORT=${EMAIL_PORT}
-EMAIL_USER=${EMAIL_USER}
-EMAIL_PASS=${EMAIL_PASS}
-FRONTEND_URL=${FRONTEND_URL}
-EOF
-echo "✓ .env file created"
-ENDSSH
-                            """
-                        }
-                    }
-                }
-            }
-        }
-        
         stage('Deploy') {
             steps {
                 script {
