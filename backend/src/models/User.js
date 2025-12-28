@@ -68,13 +68,9 @@ const userSchema = new mongoose.Schema(
 // Index for email queries
 userSchema.index({ email: 1 });
 
-// Hash password before saving (only for local users with passwords)
+// Hash password before saving
 userSchema.pre('save', async function (next) {
-  // Skip password hashing if:
-  // 1. Password not modified
-  // 2. User is OAuth user (no password)
-  // 3. Password is empty
-  if (!this.isModified('password') || this.provider !== 'local' || !this.password) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
