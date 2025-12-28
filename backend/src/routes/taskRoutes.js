@@ -7,6 +7,7 @@ import {
   deleteTask,
   updateTaskPositions,
   validateTask,
+  validateUpdateTask,
   getMyTasks,
 } from '../controllers/taskController.js';
 import { protect } from '../middleware/auth.js';
@@ -25,7 +26,7 @@ router
 router
   .route('/:id')
   .get(getTask)
-  .put(validateTask, updateTask)
+  .put(validateUpdateTask, updateTask)
   .delete(deleteTask);
 
 router.put('/positions/update', updateTaskPositions);

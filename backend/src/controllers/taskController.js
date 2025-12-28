@@ -217,6 +217,22 @@ export const validateTask = [
     .withMessage('Invalid assignee ID'),
 ];
 
+export const validateUpdateTask = [
+  body('title').optional().trim().notEmpty().withMessage('Task title is required'),
+  body('status')
+    .optional()
+    .isIn(['todo', 'in-progress', 'done'])
+    .withMessage('Invalid status'),
+  body('priority')
+    .optional()
+    .isIn(['low', 'medium', 'high', 'critical'])
+    .withMessage('Invalid priority'),
+  body('assignee')
+    .optional({ nullable: true })
+    .isMongoId()
+    .withMessage('Invalid assignee ID'),
+];
+
 export const getMyTasks = async (req, res, next) => {
   try {
     const tasks = await taskService.getTasksByAssignee(req.user.userId);
