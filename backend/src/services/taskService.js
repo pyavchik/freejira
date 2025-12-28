@@ -15,19 +15,19 @@ const isProjectMember = (project, userId) => {
 };
 
 export const createTask = async (taskData, userId) => {
-  console.log('[taskService.createTask] input', { project: taskData.project, userId, assignee: taskData.assignee, title: taskData.title });
+
   // Verify user has access to project
   const project = await Project.findById(taskData.project).populate('members');
   if (!project) {
     const err = new Error('Project not found');
     err.statusCode = 404;
-    console.warn('[taskService.createTask] project not found', { projectId: taskData.project });
+
     throw err;
   }
   if (!isProjectMember(project, userId)) {
     const err = new Error('Access denied to project');
     err.statusCode = 403;
-    console.warn('[taskService.createTask] access denied', { projectId: taskData.project, userId });
+
     throw err;
   }
 
@@ -37,14 +37,14 @@ export const createTask = async (taskData, userId) => {
     if (!assignee) {
       const err = new Error('Assignee not found');
       err.statusCode = 404;
-      console.warn('[taskService.createTask] assignee not found', { assigneeId: taskData.assignee });
+
       throw err;
     }
     const isMember = memberIds(project).includes(taskData.assignee.toString());
     if (!isMember) {
       const err = new Error('Assignee must be a project member');
       err.statusCode = 400;
-      console.warn('[taskService.createTask] assignee not a member', { assigneeId: taskData.assignee, projectId: project._id, memberIds: memberIds(project) });
+
       throw err;
     }
   }
@@ -73,7 +73,7 @@ export const createTask = async (taskData, userId) => {
     });
   }
 
-  console.log('[taskService.createTask] created', { taskId: task._id });
+
 
   return await Task.findById(task._id)
     .populate('project', 'name key')
@@ -139,7 +139,7 @@ export const updateTask = async (taskId, updateData, userId) => {
   if (!isProjectMember(project, userId)) {
     const err = new Error('Access denied to project');
     err.statusCode = 403;
-    console.warn('[taskService.updateTask] access denied', { projectId: project._id, userId });
+
     throw err;
   }
 
@@ -150,18 +150,18 @@ export const updateTask = async (taskId, updateData, userId) => {
       if (!assignee) {
         const err = new Error('Assignee not found');
         err.statusCode = 404;
-        console.warn('[taskService.updateTask] assignee not found', { assigneeId: updateData.assignee });
+  
         throw err;
       }
       const isMember = memberIds(project).includes(updateData.assignee.toString());
       if (!isMember) {
         const err = new Error('Assignee must be a project member');
         err.statusCode = 400;
-        console.warn('[taskService.updateTask] assignee not a member', { assigneeId: updateData.assignee, projectId: project._id, memberIds: memberIds(project) });
+  
         throw err;
       }
     } else {
-      console.log('[taskService.updateTask] unassigning task', { taskId });
+
     }
   }
 
@@ -207,7 +207,7 @@ export const updateTask = async (taskId, updateData, userId) => {
     });
   }
 
-  console.log('[taskService.updateTask] updated', { taskId });
+
 
   return await Task.findById(task._id)
     .populate('project', 'name key')
@@ -242,13 +242,4 @@ export const updateTaskPositions = async (tasks, userId) => {
     .populate('reporter', 'name email avatar');
 };
 
-export const getTasksByAssignee = async (assigneeId) => {
-  console.log('[taskService.getTasksByAssignee] input', { assigneeId });
-  const tasks = await Task.find({ assignee: assigneeId })
-    .populate('project', 'name key')
-    .populate('assignee', 'name email avatar')
-    .populate('reporter', 'name email avatar')
-    .sort({ createdAt: -1 });
-  console.log('[taskService.getTasksByAssignee] found', { count: tasks.length });
-  return tasks;
-};
+
