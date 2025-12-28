@@ -116,8 +116,13 @@ export default function ProjectDetailPage() {
   })
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) =>
-      taskService.update(taskId, updates),
+    mutationFn: ({ taskId, updates }: { taskId: string; updates: Partial<Task> & { assignee?: any } }) => {
+      const updateData: Partial<Task> & { assignee?: string } = { ...updates };
+      if (updates.assignee && typeof updates.assignee === 'object') {
+        updateData.assignee = updates.assignee._id;
+      }
+      return taskService.update(taskId, updateData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
       toast.success('Task updated successfully!')
