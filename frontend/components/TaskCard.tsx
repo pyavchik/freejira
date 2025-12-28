@@ -66,7 +66,6 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
                       <button
                         onClick={(e) => {
                           e.preventDefault()
-                          e.stopPropagation()
                           onEdit(task)
                         }}
                         className={cn(
@@ -86,7 +85,6 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
                       <button
                         onClick={(e) => {
                           e.preventDefault()
-                          e.stopPropagation()
                           onDelete(task._id)
                         }}
                         className={cn(
