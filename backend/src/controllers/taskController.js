@@ -147,7 +147,6 @@ export const getTask = async (req, res, next) => {
 
 export const updateTask = async (req, res, next) => {
   try {
-    console.log('updateTask controller called with:', { id: req.params.id, body: req.body });
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -204,6 +203,22 @@ export const validateTask = [
     .withMessage('Project ID is required')
     .isMongoId()
     .withMessage('Invalid project ID'),
+  body('status')
+    .optional()
+    .isIn(['todo', 'in-progress', 'done'])
+    .withMessage('Invalid status'),
+  body('priority')
+    .optional()
+    .isIn(['low', 'medium', 'high', 'critical'])
+    .withMessage('Invalid priority'),
+  body('assignee')
+    .optional({ nullable: true })
+    .isMongoId()
+    .withMessage('Invalid assignee ID'),
+];
+
+export const validateUpdateTask = [
+  body('title').optional().trim().notEmpty().withMessage('Task title is required'),
   body('status')
     .optional()
     .isIn(['todo', 'in-progress', 'done'])

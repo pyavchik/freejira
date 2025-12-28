@@ -283,7 +283,6 @@ export const taskService = {
       subtasks?: Array<{ title: string; completed: boolean }>
     }
   ): Promise<Task> => {
-    console.log('taskService.update called with:', { id, data });
     const response = await api.put<{ success: boolean; data: Task }>(
       `/tasks/${id}`,
       data
