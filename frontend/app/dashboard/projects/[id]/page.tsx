@@ -1,5 +1,4 @@
-'use client'
-
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   projectService,
@@ -13,9 +12,10 @@ import { useParams } from 'next/navigation'
 import { KanbanBoard } from '@/components/KanbanBoard'
 import { UserStoryBoard } from '@/components/UserStoryBoard'
 import toast from 'react-hot-toast'
-import { useState } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
+import EditTaskModal from '@/components/EditTaskModal'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -24,11 +24,15 @@ export default function ProjectDetailPage() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [isUserStoryModalOpen, setIsUserStoryModalOpen] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [taskFormData, setTaskFormData] = useState({
     title: '',
     description: '',
     priority: 'medium' as Task['priority'],
-    assignee: '' as string,
+    assignee: '' as string | undefined, // Allow undefined for unassigned
   })
   const [userStoryFormData, setUserStoryFormData] = useState({
     title: '',
@@ -76,7 +80,7 @@ export default function ProjectDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
       toast.success('Task created!')
       setIsTaskModalOpen(false)
-      setTaskFormData({ title: '', description: '', priority: 'medium', assignee: '' })
+      setTaskFormData({ title: '', description: '', priority: 'medium', assignee: undefined })
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to create task')
@@ -109,26 +113,30 @@ export default function ProjectDetailPage() {
     },
   })
 
-  const updateMutation = useMutation({
-    mutationFn: ({
-      taskId,
-      updates,
-    }: {
-      taskId: string
-      updates: Partial<Task>
-    }) => {
-      // Convert assignee object to ID string if present
-      const updateData: any = { ...updates }
-      if (updates.assignee && typeof updates.assignee === 'object') {
-        updateData.assignee = updates.assignee._id
-      }
-      return taskService.update(taskId, updateData)
-    },
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) =>
+      taskService.update(taskId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+      toast.success('Task updated successfully!')
+      setIsEditModalOpen(false)
+      setSelectedTask(null)
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to update task')
+    },
+  })
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: string) => taskService.delete(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+      toast.success('Task deleted successfully!')
+      setIsDeleteModalOpen(false)
+      setSelectedTask(null)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to delete task')
     },
   })
 
@@ -175,8 +183,24 @@ export default function ProjectDetailPage() {
     })
   }
 
-  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
-    updateMutation.mutate({ taskId, updates })
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteTask = (taskId: string) => {
+    setSelectedTask(tasks?.find((t) => t._id === taskId) || null)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleSaveEditedTask = (taskId: string, updates: Partial<Task>) => {
+    updateTaskMutation.mutate({ taskId, updates })
+  }
+
+  const handleConfirmDeleteTask = () => {
+    if (selectedTask) {
+      deleteTaskMutation.mutate(selectedTask._id)
+    }
   }
 
   const handleTaskMove = (updatedTasks: Task[]) => {
@@ -587,8 +611,9 @@ export default function ProjectDetailPage() {
           tasks && tasks.length > 0 ? (
             <KanbanBoard
               tasks={tasks}
-              onTaskUpdate={handleTaskUpdate}
               onTaskMove={handleTaskMove}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
             />
           ) : (
             <div className="p-8 text-center">
@@ -611,6 +636,26 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {selectedTask && (
+        <EditTaskModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSaveEditedTask}
+          task={selectedTask}
+        />
+      )}
+
+      {selectedTask && (
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleConfirmDeleteTask}
+          title="Delete Task"
+          message={`Are you sure you want to delete task "${selectedTask.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+        />
+      )}
     </div>
   )
 }

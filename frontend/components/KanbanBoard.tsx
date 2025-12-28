@@ -7,8 +7,9 @@ import { useState } from 'react'
 
 interface KanbanBoardProps {
   tasks: Task[]
-  onTaskUpdate: (taskId: string, updates: Partial<Task>) => void
   onTaskMove: (tasks: Task[]) => void
+  onEditTask: (task: Task) => void
+  onDeleteTask: (taskId: string) => void
 }
 
 const columns = [
@@ -19,8 +20,9 @@ const columns = [
 
 export function KanbanBoard({
   tasks,
-  onTaskUpdate,
   onTaskMove,
+  onEditTask,
+  onDeleteTask,
 }: KanbanBoardProps) {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
 
@@ -142,9 +144,8 @@ export function KanbanBoard({
                           >
                             <TaskCard
                               task={task}
-                              onUpdate={(updates) =>
-                                onTaskUpdate(task._id, updates)
-                              }
+                              onEdit={onEditTask}
+                              onDelete={onDeleteTask}
                             />
                           </div>
                         )}
