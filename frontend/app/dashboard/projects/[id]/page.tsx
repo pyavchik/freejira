@@ -191,7 +191,6 @@ export default function ProjectDetailPage() {
   }
 
   const handleDeleteTask = (taskId: string) => {
-    console.log('handleDeleteTask called with taskId:', taskId);
     setSelectedTask(tasks?.find((t) => t._id === taskId) || null)
     setIsDeleteModalOpen(true)
   }

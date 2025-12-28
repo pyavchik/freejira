@@ -24,7 +24,6 @@ export function KanbanBoard({
   onEditTask,
   onDeleteTask,
 }: KanbanBoardProps) {
-  console.log('KanbanBoard received onDeleteTask:', onDeleteTask);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
 
   const getTasksByStatus = (status: string) => {
