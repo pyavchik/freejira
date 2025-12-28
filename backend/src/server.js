@@ -19,6 +19,11 @@ import userRoutes from './routes/userRoutes.js';
 // Load env vars
 dotenv.config();
 
+// Log environment variables to check if they are loaded
+console.log('MONGO_URI:', process.env.MONGO_URI ? 'Loaded' : 'Not Loaded');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Loaded' : 'Not Loaded');
+console.log('JWT_EXPIRE:', process.env.JWT_EXPIRE ? 'Loaded' : 'Not Loaded');
+
 // Connect to database
 connectDB();
 
