@@ -4,6 +4,7 @@ import {
   getUserById,
   forgotPassword,
   resetPassword,
+  acceptTerms,
 } from '../services/authService.js';
 import { body, validationResult } from 'express-validator';
 
@@ -92,6 +93,7 @@ export const getMe = async (req, res, next) => {
         email: user.email,
         avatar: user.avatar,
         role: user.role,
+        acceptedTerms: user.acceptedTerms,
       },
     });
   } catch (error) {
@@ -144,6 +146,22 @@ export const resetPasswordRequest = async (req, res, next) => {
     }
 
     const result = await resetPassword(req.body.resetToken, req.body.password);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+export const acceptTermsRequest = async (req, res, next) => {
+  try {
+    // User ID comes from the protect middleware (req.user.userId)
+    const result = await acceptTerms(req.user.userId);
     res.status(200).json({
       success: true,
       data: result,

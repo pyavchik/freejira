@@ -36,6 +36,7 @@ export const registerUser = async (userData) => {
       email: user.email,
       avatar: user.avatar,
       role: user.role,
+      acceptedTerms: user.acceptedTerms,
     },
     token,
     refreshToken,
@@ -65,6 +66,7 @@ export const loginUser = async (email, password) => {
       email: user.email,
       avatar: user.avatar,
       role: user.role,
+      acceptedTerms: user.acceptedTerms,
     },
     token,
     refreshToken,
@@ -111,6 +113,7 @@ export const googleLoginUser = async (idToken) => {
       provider: 'google',
       providerId: googleId,
       avatar: picture || '',
+      acceptedTerms: false, // OAuth users must accept terms post-registration
       // No password field - it's optional for OAuth users
     });
   }
@@ -125,6 +128,7 @@ export const googleLoginUser = async (idToken) => {
       email: user.email,
       avatar: user.avatar,
       role: user.role,
+      acceptedTerms: user.acceptedTerms,
     },
     token,
     refreshToken,
@@ -189,9 +193,33 @@ export const resetPassword = async (resetToken, password) => {
       email: user.email,
       avatar: user.avatar,
       role: user.role,
+      acceptedTerms: user.acceptedTerms,
     },
     token,
     refreshToken,
+  };
+};
+
+export const acceptTerms = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Update acceptedTerms to true
+  user.acceptedTerms = true;
+  await user.save();
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role: user.role,
+      acceptedTerms: user.acceptedTerms,
+    },
   };
 };
 
