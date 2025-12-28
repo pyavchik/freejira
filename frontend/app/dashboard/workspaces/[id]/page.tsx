@@ -1,5 +1,3 @@
-'use client'
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workspaceService, projectService, Project } from '@/lib/api-services'
 import { useParams, useRouter } from 'next/navigation'
@@ -7,6 +5,7 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { TrashIcon } from '@heroicons/react/24/outline'
 
 export default function WorkspaceDetailPage() {
   const params = useParams()
@@ -231,6 +230,17 @@ export default function WorkspaceDetailPage() {
               key={project._id}
               className="relative block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleDeleteProject(project);
+                }}
+                className="absolute top-4 right-4 z-10 text-gray-400 hover:text-red-500"
+                aria-label={`Delete project ${project.name}`}
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
               <Link
                 href={`/dashboard/projects/${project._id}`}
                 className="absolute inset-0"
@@ -251,17 +261,6 @@ export default function WorkspaceDetailPage() {
                   {project.members.length} member
                   {project.members.length !== 1 ? 's' : ''}
                 </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleDeleteProject(project);
-                  }}
-                  className="z-10 rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                  aria-label={`Delete project ${project.name}`}
-                >
-                  Delete
-                </button>
               </div>
             </div>
           ))}
