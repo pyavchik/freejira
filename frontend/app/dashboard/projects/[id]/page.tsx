@@ -196,6 +196,7 @@ export default function ProjectDetailPage() {
   }
 
   const handleSaveEditedTask = (taskId: string, updates: Partial<Task>) => {
+    console.log('handleSaveEditedTask called with:', { taskId, updates });
     updateTaskMutation.mutate({ taskId, updates })
   }
 

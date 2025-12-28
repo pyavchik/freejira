@@ -131,7 +131,7 @@ export const getTaskById = async (taskId, userId) => {
 };
 
 export const updateTask = async (taskId, updateData, userId) => {
-  console.log('[taskService.updateTask] input', { taskId, userId, assignee: updateData.assignee, status: updateData.status });
+  console.log('updateTask service called with:', { taskId, updateData, userId });
   const task = await getTaskById(taskId, userId);
   const project = await Project.findById(task.project._id).populate('members');
   const oldStatus = task.status;

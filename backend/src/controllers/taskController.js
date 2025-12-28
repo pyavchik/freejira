@@ -147,6 +147,7 @@ export const getTask = async (req, res, next) => {
 
 export const updateTask = async (req, res, next) => {
   try {
+    console.log('updateTask controller called with:', { id: req.params.id, body: req.body });
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
