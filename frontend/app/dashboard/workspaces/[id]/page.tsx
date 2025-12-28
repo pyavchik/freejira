@@ -1,3 +1,5 @@
+'use client'
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { workspaceService, projectService, Project } from '@/lib/api-services'
 import { useParams, useRouter } from 'next/navigation'
