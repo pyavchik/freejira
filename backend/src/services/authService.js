@@ -44,19 +44,15 @@ export const registerUser = async (userData) => {
 };
 
 export const loginUser = async (email, password) => {
-  console.log(`Login attempt for email: ${email}`);
   // Check if user exists
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
-    console.log(`Login failed: User not found for email: ${email}`);
     throw new Error('Invalid credentials');
   }
 
   // Check password
   const isMatch = await user.matchPassword(password);
-  console.log(`Password match for ${email}: ${isMatch}`);
   if (!isMatch) {
-    console.log(`Login failed: Password mismatch for email: ${email}`);
     throw new Error('Invalid credentials');
   }
 
