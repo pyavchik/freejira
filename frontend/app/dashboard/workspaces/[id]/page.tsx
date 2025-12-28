@@ -6,12 +6,15 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 export default function WorkspaceDetailPage() {
   const params = useParams()
   const router = useRouter()
   const workspaceId = params.id as string
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     key: '',
@@ -61,6 +64,19 @@ export default function WorkspaceDetailPage() {
     },
   })
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: (projectId: string) => projectService.delete(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', workspaceId] })
+      toast.success('Project deleted successfully!')
+      setIsDeleteModalOpen(false)
+      setSelectedProject(null)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to delete project')
+    },
+  })
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     createMutation.mutate({
@@ -68,6 +84,17 @@ export default function WorkspaceDetailPage() {
       workspace: workspaceId,
       key: formData.key.toUpperCase(),
     })
+  }
+
+  const handleDeleteProject = (project: Project) => {
+    setSelectedProject(project)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (selectedProject) {
+      deleteProjectMutation.mutate(selectedProject._id)
+    }
   }
 
   if (isLoading) {
@@ -200,11 +227,14 @@ export default function WorkspaceDetailPage() {
       {projects && projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <Link
+            <div
               key={project._id}
-              href={`/dashboard/projects/${project._id}`}
-              className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
+              className="relative block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200 dark:border-gray-700"
             >
+              <Link
+                href={`/dashboard/projects/${project._id}`}
+                className="absolute inset-0"
+              />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 {project.name}
               </h3>
@@ -216,13 +246,24 @@ export default function WorkspaceDetailPage() {
                   {project.description}
                 </p>
               )}
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                 <span>
                   {project.members.length} member
                   {project.members.length !== 1 ? 's' : ''}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleDeleteProject(project);
+                  }}
+                  className="z-10 text-red-500 hover:text-red-700"
+                  aria-label={`Delete project ${project.name}`}
+                >
+                  Delete
+                </button>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       ) : (
@@ -231,6 +272,17 @@ export default function WorkspaceDetailPage() {
             No projects yet. Create your first project to get started!
           </p>
         </div>
+      )}
+
+      {selectedProject && (
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Project"
+          message={`Are you sure you want to delete project "${selectedProject.name}"? This action cannot be undone.`}
+          confirmText="Delete"
+        />
       )}
     </div>
   )

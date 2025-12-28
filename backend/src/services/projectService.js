@@ -1,6 +1,8 @@
 import Project from '../models/Project.js';
 import Workspace from '../models/Workspace.js';
 import User from '../models/User.js';
+import Task from '../models/Task.js';
+import UserStory from '../models/UserStory.js';
 
 export const createProject = async (projectData, userId) => {
   // Verify user has access to workspace
@@ -110,6 +112,10 @@ export const deleteProject = async (projectId, userId) => {
   ) {
     throw new Error('Not authorized to delete project');
   }
+
+  // Delete all tasks and user stories associated with the project
+  await Task.deleteMany({ project: projectId });
+  await UserStory.deleteMany({ project: projectId });
 
   await Project.findByIdAndDelete(projectId);
 };
