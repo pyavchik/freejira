@@ -23,6 +23,7 @@ const priorityColors = {
 }
 
 export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+  console.log('TaskCard received onDelete:', onDelete);
   const completedSubtasks = task.subtasks?.filter((st) => st.completed).length || 0
   const totalSubtasks = task.subtasks?.length || 0
 
