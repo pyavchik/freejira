@@ -157,7 +157,7 @@ export const forgotPassword = async (email) => {
 
   return {
     message: 'If that email exists, a password reset link has been sent.',
-    resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined, // Only in dev for testing
+    resetToken: resetToken,
   };
 };
 
