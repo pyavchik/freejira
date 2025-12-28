@@ -242,4 +242,12 @@ export const updateTaskPositions = async (tasks, userId) => {
     .populate('reporter', 'name email avatar');
 };
 
+export const getTasksByAssignee = async (assigneeId) => {
+  return await Task.find({ assignee: assigneeId })
+    .populate('project', 'name key')
+    .populate('assignee', 'name email avatar')
+    .populate('reporter', 'name email avatar')
+    .sort({ createdAt: -1 });
+};
+
 
