@@ -6,6 +6,7 @@ import {
   googleLogin,
   forgotPasswordRequest,
   resetPasswordRequest,
+  acceptTermsRequest,
   validateRegister,
   validateLogin,
   validateForgotPassword,
@@ -20,6 +21,7 @@ router.post('/login', validateLogin, login);
 router.post('/google', googleLogin);
 router.post('/forgot-password', validateForgotPassword, forgotPasswordRequest);
 router.post('/reset-password', validateResetPassword, resetPasswordRequest);
+router.post('/accept-terms', protect, acceptTermsRequest);
 router.get('/me', protect, getMe);
 
 export default router;

@@ -7,6 +7,7 @@ export interface User {
   email: string
   avatar?: string
   role: string
+  acceptedTerms?: boolean
 }
 
 export interface AuthResponse {
@@ -125,6 +126,13 @@ export const authService = {
       })
     }
     return response.data.data
+  },
+
+  acceptTerms: async () => {
+    const response = await api.post<{ success: boolean; data: { user: User } }>(
+      '/auth/accept-terms'
+    )
+    return response.data.data.user
   },
 }
 

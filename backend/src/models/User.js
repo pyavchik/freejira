@@ -57,9 +57,7 @@ const userSchema = new mongoose.Schema(
     acceptedTerms: {
       type: Boolean,
       default: false,
-      required: function() {
-        return this.provider === 'local';
-      },
+      required: true,
     },
   },
   {

@@ -104,7 +104,15 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      await authService.login(formData.email, formData.password)
+      const authResponse = await authService.login(formData.email, formData.password)
+
+      // Check if user needs to accept terms
+      if (!authResponse.user.acceptedTerms) {
+        toast.success('Logged in successfully! Please accept Terms and Conditions.')
+        router.push('/accept-terms')
+        return
+      }
+
       toast.success('Logged in successfully!')
       router.push('/dashboard')
     } catch (error: any) {
@@ -139,7 +147,15 @@ export default function LoginPage() {
   const handleGoogleLogin = async (response: any) => {
     setIsLoading(true)
     try {
-      await authService.loginWithGoogle(response.credential)
+      const authResponse = await authService.loginWithGoogle(response.credential)
+
+      // Check if user needs to accept terms
+      if (!authResponse.user.acceptedTerms) {
+        toast.success('Logged in with Google successfully! Please accept Terms and Conditions.')
+        router.push('/accept-terms')
+        return
+      }
+
       toast.success('Logged in with Google successfully!')
       router.push('/dashboard')
     } catch (error: any) {

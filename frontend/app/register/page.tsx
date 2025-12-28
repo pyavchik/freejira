@@ -101,7 +101,15 @@ export default function RegisterPage() {
   const handleGoogleRegister = async (response: any) => {
     setIsLoading(true)
     try {
-      await authService.loginWithGoogle(response.credential)
+      const authResponse = await authService.loginWithGoogle(response.credential)
+
+      // Check if user needs to accept terms
+      if (!authResponse.user.acceptedTerms) {
+        toast.success('Account created with Google successfully! Please accept Terms and Conditions.')
+        router.push('/accept-terms')
+        return
+      }
+
       toast.success('Account created with Google successfully!')
       router.push('/dashboard')
     } catch (error: any) {

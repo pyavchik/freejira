@@ -1,20 +1,40 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { authService } from '@/lib/auth'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      router.push('/login')
-    } else {
-      setIsLoading(false)
+    const checkAuth = async () => {
+      if (!authService.isAuthenticated()) {
+        router.push('/login')
+        return
+      }
+
+      try {
+        // Fetch current user to check Terms acceptance
+        const user = await authService.getMe()
+
+        // If user hasn't accepted terms and not already on accept-terms page
+        if (!user.acceptedTerms && pathname !== '/accept-terms') {
+          router.push('/accept-terms')
+          return
+        }
+
+        setIsLoading(false)
+      } catch (error) {
+        // If error fetching user, redirect to login
+        router.push('/login')
+      }
     }
-  }, [router])
+
+    checkAuth()
+  }, [router, pathname])
 
   if (isLoading) {
     return (
