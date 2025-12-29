@@ -25,6 +25,7 @@ export const createUserStory = async (userStoryData, userId) => {
 
   return await UserStory.findById(userStory._id)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };
@@ -38,6 +39,7 @@ export const getUserStories = async (projectId, userId) => {
 
   return await UserStory.find({ project: projectId })
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar')
     .sort({ position: 1, createdAt: -1 });
@@ -46,6 +48,7 @@ export const getUserStories = async (projectId, userId) => {
 export const getUserStoryById = async (userStoryId, userId) => {
   const userStory = await UserStory.findById(userStoryId)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 
@@ -85,6 +88,7 @@ export const updateUserStory = async (userStoryId, updateData, userId) => {
 
   return await UserStory.findById(userStory._id)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };
@@ -113,6 +117,7 @@ export const updateUserStoryPositions = async (userStories, userId) => {
 
   return await UserStory.find({ _id: { $in: userStories.map((s) => s._id) } })
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };

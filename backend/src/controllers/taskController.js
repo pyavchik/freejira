@@ -241,3 +241,12 @@ export const getMyTasks = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getAllTasks = async (req, res, next) => {
+  try {
+    const tasks = await taskService.getAllTasksForUser(req.user.userId);
+    res.status(200).json({ success: true, data: tasks });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,21 +1,19 @@
 import * as taskService from '../src/services/taskService.js';
-import { jest } from '@jest/globals';
 
-// Simple mock for ObjectId
-class MockObjectId {
-  constructor(id = Math.random().toString(36).substring(2, 15)) {
-    this._id = id;
-  }
-  toString() {
-    return this._id;
-  }
-  equals(other) {
-    return other && other.toString() === this._id;
-  }
-}
 
-// Completely mock the mongoose module
 jest.mock('mongoose', () => {
+  // Simple mock for ObjectId
+  class MockObjectId {
+    constructor(id = Math.random().toString(36).substring(2, 15)) {
+      this._id = id;
+    }
+    toString() {
+      return this._id;
+    }
+    equals(other) {
+      return other && other.toString() === this._id;
+    }
+  }
   
 
 
@@ -53,6 +51,19 @@ jest.mock('mongoose', () => {
           [path]: store.Project.get(this[path].toString()),
         };
       }
+
+      // Handle array population (e.g., members)
+      if (Array.isArray(this[path])) {
+        const populatedArray = this[path].map(id => {
+          // If it's an object with _id, extract _id, otherwise assume it's already an ID
+          const userId = id && id._id ? id._id.toString() : id.toString();
+          return store.User.get(userId) || id; // Return populated user or original ID if not found
+        });
+        return {
+          ...this,
+          [path]: populatedArray,
+        };
+      }
       return this;
     }
 
@@ -62,34 +73,54 @@ jest.mock('mongoose', () => {
     }
 
     static find(query) {
-      let results = Array.from(store[this.modelName].values());
+      let initialResults = Array.from(store[this.modelName].values());
       if (query && query.project) {
-        results = results.filter(item => item.project && item.project.toString() === query.project.toString());
+        initialResults = initialResults.filter(item => item.project && item.project.toString() === query.project.toString());
       }
-      return {
+
+      const queryChain = {
+        _results: initialResults, // Store results within the chain object
+        _model: this, // Keep reference to the model constructor
+
         populate: function(path, select) {
-          // Mock populate for find results
-          if (path === 'project') {
-            results = results.map(item => ({
-              ...item,
-              project: store.Project.get(item.project.toString()) || item.project,
-            }));
-          } else if (path === 'assignee' || path === 'reporter') {
-            results = results.map(item => ({
-              ...item,
-              [path]: store.User.get(item[path]?.toString()) || item[path],
-            }));
-          }
-          return this; // Allow chaining
+          // Eagerly populate all known paths to avoid chaining issues
+          this._results = this._results.map(item => {
+            const newItem = { ...item }; // Create a mutable copy
+
+            if (newItem.project && !newItem.project.name) { // Check if project is not already populated
+                newItem.project = store.Project.get(newItem.project.toString()) || newItem.project;
+            }
+            if (newItem.assignee && !newItem.assignee.name) { // Check if assignee is not already populated
+                newItem.assignee = store.User.get(newItem.assignee.toString()) || newItem.assignee;
+            }
+            if (newItem.reporter && !newItem.reporter.name) { // Check if reporter is not already populated
+                newItem.reporter = store.User.get(newItem.reporter.toString()) || newItem.reporter;
+            }
+            if (newItem.members && Array.isArray(newItem.members) && newItem.members.every(m => !m.name)) { // Check if members are not already populated
+              newItem.members = newItem.members.map(memberId => {
+                const userId = memberId && memberId._id ? memberId._id.toString() : memberId.toString();
+                return store.User.get(userId) || memberId;
+              });
+            }
+            return newItem;
+          });
+          return this; // Allow chaining, but now populates eagerly
         },
+
         sort: function(criteria) {
-          return this; // No-op for simple mock
+          // No-op for simple mock for now
+          return this;
         },
-        exec: () => Promise.resolve(results.map(item => new this(item))), // Return actual instances
-        then: function(cb) { // Enable await directly on find
-          return Promise.resolve(results.map(item => new this(item))).then(cb);
+
+        exec: function() {
+          return Promise.resolve(this._results.map(item => new this._model(item)));
+        },
+
+        then: function(cb) {
+          return this.exec().then(cb);
         }
       };
+      return queryChain;
     }
 
     static create(data) {
@@ -141,10 +172,21 @@ jest.mock('mongoose', () => {
         default: return MockModel;
       }
     }),
-    Schema: jest.fn(() => ({
-      methods: {},
-      statics: {},
-    })),
+    Schema: class MockSchema {
+      constructor() {
+        this.methods = {};
+        this.statics = {};
+      }
+      static Types = { // Define Types as a static property of MockSchema
+        ObjectId: MockObjectId,
+      };
+      index() {
+        // No-op for testing purposes
+      }
+      pre() {
+        // No-op for testing purposes
+      }
+    },
     Types: {
       ObjectId: MockObjectId,
     },

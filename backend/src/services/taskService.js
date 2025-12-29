@@ -77,6 +77,7 @@ export const createTask = async (taskData, userId) => {
 
   return await Task.findById(task._id)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };
@@ -97,6 +98,7 @@ export const getTasks = async (projectId, userId) => {
 
   return await Task.find({ project: projectId })
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar')
     .sort({ position: 1, createdAt: -1 });
@@ -105,6 +107,7 @@ export const getTasks = async (projectId, userId) => {
 export const getTaskById = async (taskId, userId) => {
   const task = await Task.findById(taskId)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 
@@ -211,6 +214,7 @@ export const updateTask = async (taskId, updateData, userId) => {
 
   return await Task.findById(task._id)
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };
@@ -238,6 +242,7 @@ export const updateTaskPositions = async (tasks, userId) => {
 
   return await Task.find({ _id: { $in: tasks.map((t) => t._id) } })
     .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar');
 };
@@ -245,6 +250,27 @@ export const updateTaskPositions = async (tasks, userId) => {
 export const getTasksByAssignee = async (assigneeId) => {
   return await Task.find({ assignee: assigneeId })
     .populate('project', 'name key')
+    .populate('epic', 'name')
+    .populate('assignee', 'name email avatar')
+    .populate('reporter', 'name email avatar')
+    .sort({ createdAt: -1 });
+};
+
+export const getAllTasksForUser = async (userId) => {
+  // Find all projects where user is a member or lead
+  const projects = await Project.find({
+    $or: [
+      { lead: userId },
+      { 'members': userId }
+    ]
+  });
+
+  const projectIds = projects.map(p => p._id);
+
+  // Get all tasks from these projects
+  return await Task.find({ project: { $in: projectIds } })
+    .populate('project', 'name key')
+    .populate('epic', 'name')
     .populate('assignee', 'name email avatar')
     .populate('reporter', 'name email avatar')
     .sort({ createdAt: -1 });

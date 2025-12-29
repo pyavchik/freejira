@@ -14,6 +14,7 @@ import taskRoutes from './routes/taskRoutes.js';
 import userStoryRoutes from './routes/userStoryRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
+import epicRoutes from './routes/epicRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 // Load env vars
@@ -60,6 +61,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/user-stories', userStoryRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/epics', epicRoutes);
 app.use('/api/users', userRoutes);
 
 // Health check

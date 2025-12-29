@@ -99,7 +99,7 @@ export function UserStoryBoard({
   return (
     <div style={{ height: '100%', overflow: 'auto' }}>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 p-6" style={{ minWidth: 'max-content' }}>
+        <div className="flex gap-6 p-6" style={{ minWidth: 'max-content', overflow: 'visible' }}>
           {columns.map((column) => {
             const columnStories = getUserStoriesByStatus(column.id)
             return (
@@ -122,12 +122,12 @@ export function UserStoryBoard({
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-1 space-y-3 overflow-y-auto ${
+                    className={`flex-1 space-y-3 ${
                       snapshot.isDraggingOver
                         ? 'bg-primary-50 dark:bg-primary-900/20'
                         : ''
                     }`}
-                    style={{ minHeight: '200px', maxHeight: 'calc(100vh - 300px)' }}
+                    style={{ minHeight: '200px' }}
                   >
                     {columnStories.map((story, index) => (
                       <Draggable
