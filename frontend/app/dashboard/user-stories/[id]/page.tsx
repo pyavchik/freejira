@@ -17,7 +17,15 @@ export default function UserStoryDetailPage() {
   const params = useParams()
   const userStoryId = params.id as string
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<Partial<UserStory>>({})
+  const [editData, setEditData] = useState<{
+    title?: string
+    description?: string
+    status?: UserStory['status']
+    priority?: UserStory['priority']
+    storyPoints?: number
+    acceptanceCriteria?: Array<{ description: string; completed: boolean }>
+    epic?: string
+  }>({})
 
   const { data: userStory, isLoading: userStoryLoading } = useQuery({
     queryKey: ['user-story', userStoryId],
@@ -245,6 +253,20 @@ export default function UserStoryDetailPage() {
                 {userStory.priority}
               </p>
             )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Epic
+            </label>
+            <button
+              onClick={() => {
+                setIsEditing(true)
+                setEditData({ ...editData, epic: userStory.epic?._id })
+              }}
+              className="text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
+            >
+              {userStory.epic ? userStory.epic.name : '🔗 Link to Epic'}
+            </button>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
