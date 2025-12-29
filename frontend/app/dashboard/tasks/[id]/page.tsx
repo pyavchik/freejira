@@ -21,7 +21,15 @@ export default function TaskDetailPage() {
   const taskId = params.id as string
   const [commentText, setCommentText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<Omit<Partial<Task>, 'assignee'> & { assignee?: string }>({})
+  const [editData, setEditData] = useState<{
+    title?: string
+    description?: string
+    status?: Task['status']
+    priority?: Task['priority']
+    assignee?: string
+    epic?: string
+    userStory?: string
+  }>({})
 
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
@@ -294,6 +302,34 @@ export default function TaskDetailPage() {
                 {task.assignee ? task.assignee.name : 'Unassigned'}
               </p>
             )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Epic
+            </label>
+            <button
+              onClick={() => {
+                setIsEditing(true)
+                setEditData({ ...editData, epic: task.epic?._id || '' })
+              }}
+              className="text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
+            >
+              {task.epic ? task.epic.name : '🔗 Link to Epic'}
+            </button>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              User Story
+            </label>
+            <button
+              onClick={() => {
+                setIsEditing(true)
+                setEditData({ ...editData, userStory: task.userStory?._id || '' })
+              }}
+              className="text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left"
+            >
+              {task.userStory ? task.userStory.title : '🔗 Link to User Story'}
+            </button>
           </div>
         </div>
 

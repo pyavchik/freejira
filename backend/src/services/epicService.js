@@ -1,6 +1,7 @@
 import Epic from '../models/Epic.js';
 import Project from '../models/Project.js';
 import UserStory from '../models/UserStory.js';
+import Task from '../models/Task.js';
 
 export const createEpic = async (epicData, userId) => {
   // Verify user has access to project

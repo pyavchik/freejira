@@ -43,6 +43,8 @@ export default function ProjectDetailPage() {
     description: '',
     priority: 'medium' as Task['priority'],
     assignee: '' as string | undefined, // Allow undefined for unassigned
+    epic: '' as string | undefined, // Allow undefined for no epic
+    userStory: '' as string | undefined, // Allow undefined for no user story
   })
   const [userStoryFormData, setUserStoryFormData] = useState({
     title: '',
@@ -105,7 +107,7 @@ export default function ProjectDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
       toast.success('Task created!')
       setIsTaskModalOpen(false)
-      setTaskFormData({ title: '', description: '', priority: 'medium', assignee: undefined })
+      setTaskFormData({ title: '', description: '', priority: 'medium', assignee: undefined, epic: undefined, userStory: undefined })
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to create task')
@@ -229,8 +231,15 @@ export default function ProjectDetailPage() {
       ...taskFormData,
       project: projectId,
     }
+    // Clean up empty fields
     if (!payload.assignee) {
       delete payload.assignee
+    }
+    if (!payload.epic) {
+      delete payload.epic
+    }
+    if (!payload.userStory) {
+      delete payload.userStory
     }
     createTaskMutation.mutate(payload)
   }
@@ -602,6 +611,44 @@ export default function ProjectDetailPage() {
                     Add project members to enable assignment.
                   </p>
                 )}
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Epic (optional)
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={taskFormData.epic}
+                  onChange={(e) =>
+                    setTaskFormData({ ...taskFormData, epic: e.target.value })
+                  }
+                >
+                  <option value="">No Epic</option>
+                  {epics?.map((epic) => (
+                    <option key={epic._id} value={epic._id}>
+                      {epic.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  User Story (optional)
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={taskFormData.userStory}
+                  onChange={(e) =>
+                    setTaskFormData({ ...taskFormData, userStory: e.target.value })
+                  }
+                >
+                  <option value="">No User Story</option>
+                  {userStories?.map((story) => (
+                    <option key={story._id} value={story._id}>
+                      {story.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex justify-end space-x-3">
                 <button
