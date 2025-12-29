@@ -26,6 +26,10 @@ const userStorySchema = new mongoose.Schema(
       ref: 'Project',
       required: true,
     },
+    epic: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Epic',
+    },
     assignee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -68,6 +72,7 @@ const userStorySchema = new mongoose.Schema(
 
 // Indexes
 userStorySchema.index({ project: 1, status: 1 });
+userStorySchema.index({ epic: 1 });
 userStorySchema.index({ assignee: 1 });
 userStorySchema.index({ reporter: 1 });
 
