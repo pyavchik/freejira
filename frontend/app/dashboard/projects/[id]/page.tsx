@@ -292,7 +292,16 @@ export default function ProjectDetailPage() {
     }
   }
 
-  const handleSaveEditedEpic = (epicId: string, updates: Partial<Epic>) => {
+  const handleSaveEditedEpic = (epicId: string, updates: {
+    name?: string
+    description?: string
+    status?: string
+    priority?: string
+    assignee?: string
+    startDate?: string
+    dueDate?: string
+    labels?: string[]
+  }) => {
     updateEpicMutation.mutate({ epicId, updates })
   }
 
@@ -350,7 +359,16 @@ export default function ProjectDetailPage() {
       updates,
     }: {
       epicId: string
-      updates: Partial<Epic>
+      updates: {
+        name?: string
+        description?: string
+        status?: string
+        priority?: string
+        assignee?: string
+        startDate?: string
+        dueDate?: string
+        labels?: string[]
+      }
     }) => epicService.update(epicId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['epics', projectId] })

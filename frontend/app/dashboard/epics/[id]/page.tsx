@@ -20,7 +20,16 @@ export default function EpicDetailPage() {
   const params = useParams()
   const epicId = params.id as string
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<Partial<Epic>>({})
+  const [editData, setEditData] = useState<{
+    name?: string
+    description?: string
+    status?: string
+    priority?: string
+    assignee?: string
+    startDate?: string
+    dueDate?: string
+    labels?: string[]
+  }>({})
 
   const { data: epic, isLoading: epicLoading } = useQuery({
     queryKey: ['epic', epicId],
@@ -48,7 +57,16 @@ export default function EpicDetailPage() {
   const queryClient = useQueryClient()
 
   const updateMutation = useMutation({
-    mutationFn: (updates: Partial<Epic>) => epicService.update(epicId, updates),
+    mutationFn: (updates: {
+      name?: string
+      description?: string
+      status?: string
+      priority?: string
+      assignee?: string
+      startDate?: string
+      dueDate?: string
+      labels?: string[]
+    }) => epicService.update(epicId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['epic', epicId] })
       queryClient.invalidateQueries({ queryKey: ['epics'] })
@@ -67,7 +85,7 @@ export default function EpicDetailPage() {
         description: epic.description,
         status: epic.status,
         priority: epic.priority,
-        assignee: epic.assignee,
+        assignee: epic.assignee?._id, // Convert assignee object to ID string
         startDate: epic.startDate,
         dueDate: epic.dueDate,
         labels: epic.labels,

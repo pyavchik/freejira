@@ -7,7 +7,16 @@ import { Epic } from '@/lib/api-services'
 interface EditEpicModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (epicId: string, updates: Partial<Epic>) => void
+  onSave: (epicId: string, updates: {
+    name?: string
+    description?: string
+    status?: string
+    priority?: string
+    assignee?: string
+    startDate?: string
+    dueDate?: string
+    labels?: string[]
+  }) => void
   epic: Epic | null
   projectMembers: Array<{ _id: string; name: string; email: string }>
 }
@@ -23,7 +32,7 @@ export default function EditEpicModal({
   const [description, setDescription] = useState(epic?.description || '')
   const [priority, setPriority] = useState<Epic['priority']>(epic?.priority || 'medium')
   const [status, setStatus] = useState<Epic['status']>(epic?.status || 'todo')
-  const [assignee, setAssignee] = useState(epic?.assignee?._id || '')
+  const [assignee, setAssignee] = useState<string>(epic?.assignee?._id || '')
   const [startDate, setStartDate] = useState(epic?.startDate ? epic.startDate.split('T')[0] : '')
   const [dueDate, setDueDate] = useState(epic?.dueDate ? epic.dueDate.split('T')[0] : '')
   const [labels, setLabels] = useState(epic?.labels?.join(', ') || '')
@@ -43,19 +52,15 @@ export default function EditEpicModal({
 
   const handleSave = () => {
     if (epic) {
-      const updates: Partial<Epic> = {
+      const updates = {
         name,
         description,
         priority,
         status,
+        assignee: assignee || undefined,
         startDate: startDate || undefined,
         dueDate: dueDate || undefined,
         labels: labels ? labels.split(',').map(l => l.trim()).filter(l => l) : [],
-      }
-      if (assignee) {
-        updates.assignee = projectMembers.find(m => m._id === assignee) || undefined
-      } else {
-        updates.assignee = undefined
       }
       onSave(epic._id, updates)
     }
