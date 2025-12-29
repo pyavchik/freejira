@@ -71,15 +71,24 @@ export default function TaskDetailPage() {
   })
 
   const commentMutation = useMutation({
-    mutationFn: (content: string) =>
-      commentService.create({ content, task: taskId }),
-    onSuccess: () => {
+    mutationFn: (content: string) => {
+      console.log('=== FRONTEND COMMENT CREATION ===');
+      console.log('Task ID:', taskId);
+      console.log('Comment content:', content);
+      console.log('Full request data:', { content, task: taskId });
+      return commentService.create({ content, task: taskId });
+    },
+    onSuccess: (data) => {
+      console.log('Comment creation successful:', data);
       queryClient.invalidateQueries({ queryKey: ['comments', taskId] })
       queryClient.invalidateQueries({ queryKey: ['activities', taskId] })
       setCommentText('')
       toast.success('Comment added!')
     },
     onError: (error: any) => {
+      console.error('Comment creation error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
       toast.error(error.response?.data?.error || 'Failed to add comment')
     },
   })

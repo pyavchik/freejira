@@ -3,23 +3,42 @@ import { body, validationResult } from 'express-validator';
 
 export const createComment = async (req, res, next) => {
   try {
+    console.log('=== COMMENT CREATION REQUEST ===');
+    console.log('User ID:', req.user.userId);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('Task ID from URL:', req.params.taskId);
+    console.log('Request method:', req.method);
+    console.log('Request path:', req.path);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         errors: errors.array(),
       });
     }
 
+    // Add taskId from URL params to the request body
+    const commentData = {
+      ...req.body,
+      task: req.params.taskId
+    };
+    
+    console.log('Final comment data being sent to service:', commentData);
+    
     const comment = await commentService.createComment(
-      req.body,
+      commentData,
       req.user.userId
     );
+    console.log('Comment created successfully:', comment._id);
     res.status(201).json({
       success: true,
       data: comment,
     });
   } catch (error) {
+    console.error('Error in createComment controller:', error.message);
+    console.error('Full error:', error);
     next(error);
   }
 };
@@ -73,6 +92,10 @@ export const deleteComment = async (req, res, next) => {
 };
 
 export const validateComment = [
+  body('content').trim().notEmpty().withMessage('Comment content is required'),
+];
+
+export const validateCommentWithTask = [
   body('content').trim().notEmpty().withMessage('Comment content is required'),
   body('task')
     .notEmpty()

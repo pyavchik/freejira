@@ -61,6 +61,10 @@ export interface UserStory {
     name: string
     key: string
   }
+  epic?: {
+    _id: string
+    name: string
+  }
   assignee?: {
     _id: string
     name: string
@@ -95,6 +99,10 @@ export interface Task {
     _id: string
     name: string
     key: string
+  }
+  epic?: {
+    _id: string
+    name: string
   }
   userStory?: {
     _id: string
@@ -157,6 +165,36 @@ export interface Activity {
   description: string
   metadata?: Record<string, any>
   createdAt: string
+}
+
+export interface Epic {
+  _id: string
+  name: string
+  description?: string
+  status: 'todo' | 'in-progress' | 'done'
+  priority: 'low' | 'medium' | 'high'
+  project: {
+    _id: string
+    name: string
+    key: string
+  }
+  assignee?: {
+    _id: string
+    name: string
+    email: string
+    avatar?: string
+  }
+  reporter: {
+    _id: string
+    name: string
+    email: string
+    avatar?: string
+  }
+  startDate?: string
+  dueDate?: string
+  labels: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 // API Services
@@ -251,6 +289,13 @@ export const taskService = {
     return response.data.data
   },
 
+  getAllTasks: async (): Promise<Task[]> => {
+    const response = await api.get<{ success: boolean; data: Task[] }>(
+      '/tasks'
+    )
+    return response.data.data
+  },
+
   getById: async (id: string): Promise<Task> => {
     const response = await api.get<{ success: boolean; data: Task }>(
       `/tasks/${id}`
@@ -319,11 +364,21 @@ export const commentService = {
   },
 
   create: async (data: { content: string; task: string }): Promise<Comment> => {
-    const response = await api.post<{ success: boolean; data: Comment }>(
-      '/comments',
-      data
-    )
-    return response.data.data
+    console.log('=== API SERVICE CREATE COMMENT ===');
+    console.log('Request URL:', `/comments/task/${data.task}`);
+    console.log('Request body:', { content: data.content });
+    
+    try {
+      const response = await api.post<{ success: boolean; data: Comment }>(
+        `/comments/task/${data.task}`,
+        { content: data.content }
+      )
+      console.log('API response:', response.data);
+      return response.data.data
+    } catch (error) {
+      console.error('API service error:', error);
+      throw error;
+    }
   },
 
   update: async (id: string, data: { content: string }): Promise<Comment> => {
@@ -413,6 +468,77 @@ export const userStoryService = {
     const response = await api.put<{ success: boolean; data: UserStory[] }>(
       '/user-stories/positions/update',
       { userStories }
+    )
+    return response.data.data
+  },
+}
+
+export const epicService = {
+  getAll: async (projectId: string): Promise<Epic[]> => {
+    const response = await api.get<{ success: boolean; data: Epic[] }>(
+      `/epics/project/${projectId}`
+    )
+    return response.data.data
+  },
+
+  getById: async (id: string): Promise<Epic> => {
+    const response = await api.get<{ success: boolean; data: Epic }>(
+      `/epics/${id}`
+    )
+    return response.data.data
+  },
+
+  create: async (data: {
+    name: string
+    description?: string
+    project: string
+    priority?: string
+    assignee?: string
+    startDate?: string
+    dueDate?: string
+    labels?: string[]
+  }): Promise<Epic> => {
+    const response = await api.post<{ success: boolean; data: Epic }>(
+      '/epics',
+      data
+    )
+    return response.data.data
+  },
+
+  update: async (
+    id: string,
+    data: {
+      name?: string
+      description?: string
+      status?: string
+      priority?: string
+      assignee?: string
+      startDate?: string
+      dueDate?: string
+      labels?: string[]
+    }
+  ): Promise<Epic> => {
+    const response = await api.put<{ success: boolean; data: Epic }>(
+      `/epics/${id}`,
+      data
+    )
+    return response.data.data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/epics/${id}`)
+  },
+
+  getUserStories: async (epicId: string): Promise<UserStory[]> => {
+    const response = await api.get<{ success: boolean; data: UserStory[] }>(
+      `/epics/${epicId}/user-stories`
+    )
+    return response.data.data
+  },
+
+  getTasks: async (epicId: string): Promise<Task[]> => {
+    const response = await api.get<{ success: boolean; data: Task[] }>(
+      `/epics/${epicId}/tasks`
     )
     return response.data.data
   },
