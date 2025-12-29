@@ -3,18 +3,31 @@ import Task from '../models/Task.js';
 import Activity from '../models/Activity.js';
 
 export const createComment = async (commentData, userId) => {
+  console.log('=== COMMENT SERVICE CREATE ===');
+  console.log('User ID:', userId);
+  console.log('Comment data:', JSON.stringify(commentData, null, 2));
+  
   // Verify task exists
   const task = await Task.findById(commentData.task);
+  console.log('Task found:', task ? 'Yes' : 'No');
   if (!task) {
+    console.error('Task not found for ID:', commentData.task);
     throw new Error('Task not found');
   }
 
+  console.log('Creating comment with data:', {
+    ...commentData,
+    author: userId,
+  });
+  
   const comment = await Comment.create({
     ...commentData,
     author: userId,
   });
+  console.log('Comment created with ID:', comment._id);
 
   // Create activity log
+  console.log('Creating activity log for task:', task._id);
   await Activity.create({
     type: 'comment_added',
     task: task._id,
@@ -22,9 +35,13 @@ export const createComment = async (commentData, userId) => {
     description: 'A comment was added',
   });
 
-  return await Comment.findById(comment._id)
+  console.log('Fetching comment with populated data');
+  const populatedComment = await Comment.findById(comment._id)
     .populate('author', 'name email avatar')
     .populate('task', 'title');
+    
+  console.log('Comment service completed successfully');
+  return populatedComment;
 };
 
 export const getComments = async (taskId) => {
