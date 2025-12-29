@@ -36,8 +36,10 @@ export default function ProjectDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditEpicModalOpen, setIsEditEpicModalOpen] = useState(false)
   const [isDeleteEpicModalOpen, setIsDeleteEpicModalOpen] = useState(false)
+  const [isDeleteUserStoryModalOpen, setIsDeleteUserStoryModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null)
+  const [selectedUserStory, setSelectedUserStory] = useState<UserStory | null>(null)
   const [taskFormData, setTaskFormData] = useState({
     title: '',
     description: '',
@@ -403,6 +405,19 @@ export default function ProjectDetailPage() {
     },
   })
 
+  const deleteUserStoryMutation = useMutation({
+    mutationFn: (userStoryId: string) => userStoryService.delete(userStoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-stories', projectId] })
+      toast.success('User Story deleted successfully!')
+      setIsDeleteUserStoryModalOpen(false)
+      setSelectedUserStory(null)
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to delete user story')
+    },
+  })
+
   const handleUserStoryUpdate = (
     userStoryId: string,
     updates: Partial<UserStory>
@@ -412,6 +427,17 @@ export default function ProjectDetailPage() {
 
   const handleUserStoryMove = (updatedUserStories: UserStory[]) => {
     moveUserStoryMutation.mutate(updatedUserStories)
+  }
+
+  const handleDeleteUserStory = (userStoryId: string) => {
+    setSelectedUserStory(userStories?.find((us) => us._id === userStoryId) || null)
+    setIsDeleteUserStoryModalOpen(true)
+  }
+
+  const handleConfirmDeleteUserStory = () => {
+    if (selectedUserStory) {
+      deleteUserStoryMutation.mutate(selectedUserStory._id)
+    }
   }
 
   if (tasksLoading || userStoriesLoading || epicsLoading) {
@@ -977,6 +1003,7 @@ export default function ProjectDetailPage() {
               userStories={userStories}
               onUserStoryUpdate={handleUserStoryUpdate}
               onUserStoryMove={handleUserStoryMove}
+              onUserStoryDelete={handleDeleteUserStory}
             />
           ) : (
             <div className="p-8 text-center">
@@ -1039,6 +1066,17 @@ export default function ProjectDetailPage() {
           onConfirm={handleConfirmDeleteEpic}
           title="Delete Epic"
           message={`Are you sure you want to delete epic "${selectedEpic.name}"? This action cannot be undone.`}
+          confirmText="Delete"
+        />
+      )}
+
+      {selectedUserStory && (
+        <ConfirmationModal
+          isOpen={isDeleteUserStoryModalOpen}
+          onClose={() => setIsDeleteUserStoryModalOpen(false)}
+          onConfirm={handleConfirmDeleteUserStory}
+          title="Delete User Story"
+          message={`Are you sure you want to delete user story "${selectedUserStory.title}"? This action cannot be undone.`}
           confirmText="Delete"
         />
       )}
