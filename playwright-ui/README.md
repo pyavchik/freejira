@@ -57,12 +57,12 @@ playwright-ui/
 
 ## Running Tests
 
-### Run all tests
+### Run simple tests (no browser required)
 ```bash
-mvn test
+mvn test -Dtest=SimpleTest
 ```
 
-### Run specific test suite
+### Run specific test class
 ```bash
 mvn test -Dtest=LoginPageTest
 ```
@@ -77,6 +77,14 @@ Update the `config.properties` file:
 ```properties
 headless=true
 ```
+
+### Run tests directly with TestNG
+```bash
+java -cp "target/test-classes:target/classes:$(mvn dependency:build-classpath -q -DincludeScope=test -Dmdep.outputFile=/dev/stdout)" org.testng.TestNG testng-simple.xml
+```
+
+**Note**: UI tests require the FreeJira application to be running on `http://localhost:3000`.
+The `LoginPageTest.loginTest()` is disabled by default since it requires the application.
 
 ## Configuration
 
