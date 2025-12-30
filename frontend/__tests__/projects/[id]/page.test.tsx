@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProjectDetailPage from '@/app/dashboard/projects/[id]/page';
 import { useParams } from 'next/navigation';
-import { projectService, taskService, usersService } from '@/lib/api-services';
+import { projectService, taskService, usersService, userStoryService, epicService } from '@/lib/api-services';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import EditTaskModal from '@/components/EditTaskModal';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -34,6 +34,13 @@ jest.mock('@/lib/api-services', () => ({
     getAll: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    updatePositions: jest.fn(),
+  },
+  epicService: {
+    getAll: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
     updatePositions: jest.fn(),
   },
 }));
@@ -130,6 +137,9 @@ describe('ProjectDetailPage', () => {
     (taskService.delete as jest.Mock).mockResolvedValue(undefined);
     (taskService.updatePositions as jest.Mock).mockResolvedValue(mockTasks);
     (usersService.getAll as jest.Mock).mockResolvedValue(mockProject.members);
+    (userStoryService.getAll as jest.Mock).mockResolvedValue([]);
+    (epicService.getAll as jest.Mock).mockResolvedValue([]);
+    
     // Mock other services used in the page to prevent errors
     (KanbanBoard as jest.Mock).mockImplementation(
       ({ tasks, onTaskMove, onEditTask, onDeleteTask }) => (
@@ -160,7 +170,7 @@ describe('ProjectDetailPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
-      expect(screen.getByText('TP • 2 tasks • 0 user stories')).toBeInTheDocument();
+      expect(screen.getByText(/TP • 2 tasks • 0 user stories/)).toBeInTheDocument();
       expect(screen.getByTestId('kanban-board-mock')).toBeInTheDocument();
       expect(screen.getByText('Task 1')).toBeInTheDocument();
     });

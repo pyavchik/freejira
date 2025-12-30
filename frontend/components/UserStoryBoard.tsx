@@ -9,6 +9,7 @@ interface UserStoryBoardProps {
   userStories: UserStory[]
   onUserStoryUpdate: (userStoryId: string, updates: Partial<UserStory>) => void
   onUserStoryMove: (userStories: UserStory[]) => void
+  onUserStoryDelete: (userStoryId: string) => void
 }
 
 const columns = [
@@ -23,6 +24,7 @@ export function UserStoryBoard({
   userStories,
   onUserStoryUpdate,
   onUserStoryMove,
+  onUserStoryDelete,
 }: UserStoryBoardProps) {
   const getUserStoriesByStatus = (status: string) => {
     return userStories
@@ -151,6 +153,7 @@ export function UserStoryBoard({
                               onUpdate={(updates) =>
                                 onUserStoryUpdate(story._id, updates)
                               }
+                              onDelete={onUserStoryDelete}
                             />
                           </div>
                         )}

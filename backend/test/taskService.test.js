@@ -23,6 +23,7 @@ jest.mock('mongoose', () => {
     Project: new Map(),
     User: new Map(),
     Activity: new Map(),
+    Epic: new Map(),
   };
 
   class MockModel {
@@ -69,7 +70,58 @@ jest.mock('mongoose', () => {
 
     static findById(id) {
       const item = store[this.modelName].get(id.toString());
-      return item ? new this(item) : null;
+      if (!item) {
+        // Return a query-like object even for null case to support chaining
+        const queryChain = {
+          _item: null,
+          _model: this,
+          
+          populate: function(path, select) {
+            return this;
+          },
+          
+          exec: function() {
+            return Promise.resolve(null);
+          },
+          
+          then: function(cb) {
+            return this.exec().then(cb);
+          }
+        };
+        return queryChain;
+      }
+      
+      // Return a query-like object that supports chaining
+      const queryChain = {
+        _item: item,
+        _model: this,
+        
+        populate: function(path, select) {
+          // Handle array population (e.g., members)
+          if (Array.isArray(this._item[path])) {
+            this._item[path] = this._item[path].map(id => {
+              const userId = id && id._id ? id._id.toString() : id.toString();
+              return store.User.get(userId) || id;
+            });
+          } else if (this._item[path] && store.User.has(this._item[path].toString())) {
+            this._item[path] = store.User.get(this._item[path].toString());
+          } else if (this._item[path] && store.Project.has(this._item[path].toString())) {
+            this._item[path] = store.Project.get(this._item[path].toString());
+          } else if (this._item[path] && store.Epic.has(this._item[path].toString())) {
+            this._item[path] = store.Epic.get(this._item[path].toString());
+          }
+          return this;
+        },
+        
+        exec: function() {
+          return Promise.resolve(new this._model(this._item));
+        },
+        
+        then: function(cb) {
+          return this.exec().then(cb);
+        }
+      };
+      return queryChain;
     }
 
     static find(query) {
@@ -157,6 +209,7 @@ jest.mock('mongoose', () => {
   class MockProject extends MockModel { static modelName = 'Project'; }
   class MockUser extends MockModel { static modelName = 'User'; }
   class MockActivity extends MockModel { static modelName = 'Activity'; }
+  class MockEpic extends MockModel { static modelName = 'Epic'; }
 
   return {
     connect: jest.fn().mockResolvedValue(true),
@@ -169,6 +222,7 @@ jest.mock('mongoose', () => {
         case 'Project': return MockProject;
         case 'User': return MockUser;
         case 'Activity': return MockActivity;
+        case 'Epic': return MockEpic;
         default: return MockModel;
       }
     }),
@@ -309,7 +363,7 @@ describe('taskService assignment rules', () => {
     });
 
     test('rejects update if task not found', async () => {
-      const fakeTaskId = new mongoose.Types.ObjectId();
+      const fakeTaskId = new mongooseMock.Types.ObjectId();
       await expect(
         taskService.updateTask(fakeTaskId, { title: 'Fake Update' }, member._id)
       ).rejects.toThrow('Task not found');
@@ -333,7 +387,7 @@ describe('taskService assignment rules', () => {
     });
 
     test('rejects deletion if task not found', async () => {
-      const fakeTaskId = new mongoose.Types.ObjectId();
+      const fakeTaskId = new mongooseMock.Types.ObjectId();
       await expect(
         taskService.deleteTask(fakeTaskId, member._id)
       ).rejects.toThrow('Task not found');

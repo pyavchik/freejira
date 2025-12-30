@@ -40,6 +40,19 @@ export default function UserStoryDetailPage() {
 
   const queryClient = useQueryClient()
 
+  const deleteMutation = useMutation({
+    mutationFn: () => userStoryService.delete(userStoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-stories'] })
+      toast.success('User Story deleted successfully!')
+      // Redirect to project page after deletion
+      window.location.href = `/dashboard/projects/${userStory?.project._id}`
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to delete user story')
+    },
+  })
+
   const updateMutation = useMutation({
     mutationFn: (updates: {
       title?: string
@@ -190,12 +203,25 @@ export default function UserStoryDetailPage() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                Edit
-              </button>
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this user story? This action cannot be undone.')) {
+                      deleteMutation.mutate()
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              </>
             )}
           </div>
         </div>

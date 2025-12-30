@@ -8,6 +8,7 @@ import {
   getEpicUserStories,
   getEpicTasks,
   validateEpic,
+  updateEpicPositions,
 } from '../controllers/epicController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -29,5 +30,7 @@ router
 
 router.get('/:id/user-stories', getEpicUserStories);
 router.get('/:id/tasks', getEpicTasks);
+
+router.put('/positions/update', updateEpicPositions);
 
 export default router;
