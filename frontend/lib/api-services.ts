@@ -173,6 +173,7 @@ export interface Epic {
   description?: string
   status: 'todo' | 'in-progress' | 'done'
   priority: 'low' | 'medium' | 'high'
+  position: number
   project: {
     _id: string
     name: string
@@ -539,6 +540,14 @@ export const epicService = {
   getTasks: async (epicId: string): Promise<Task[]> => {
     const response = await api.get<{ success: boolean; data: Task[] }>(
       `/epics/${epicId}/tasks`
+    )
+    return response.data.data
+  },
+
+  updatePositions: async (epics: Epic[]): Promise<Epic[]> => {
+    const response = await api.put<{ success: boolean; data: Epic[] }>(
+      '/epics/positions/update',
+      { epics }
     )
     return response.data.data
   },

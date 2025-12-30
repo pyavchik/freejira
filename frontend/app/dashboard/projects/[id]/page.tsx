@@ -214,6 +214,16 @@ export default function ProjectDetailPage() {
     },
   })
 
+  const moveEpicMutation = useMutation({
+    mutationFn: (epics: Epic[]) => epicService.updatePositions(epics),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['epics', projectId] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to move epic')
+    },
+  })
+
   const addUserMutation = useMutation({
     mutationFn: () => api.post(`/projects/${projectId}/add-user`, { userId: selectedUserId }),
     onSuccess: () => {
@@ -324,6 +334,10 @@ export default function ProjectDetailPage() {
 
   const handleTaskMove = (updatedTasks: Task[]) => {
     moveMutation.mutate(updatedTasks)
+  }
+
+  const handleEpicMove = (updatedEpics: Epic[]) => {
+    moveEpicMutation.mutate(updatedEpics)
   }
 
   const updateUserStoryMutation = useMutation({
@@ -1018,6 +1032,7 @@ export default function ProjectDetailPage() {
               epics={epics}
               onEditEpic={handleEditEpic}
               onDeleteEpic={handleDeleteEpic}
+              onEpicMove={handleEpicMove}
             />
           ) : (
             <div className="p-8 text-center">

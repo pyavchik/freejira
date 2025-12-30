@@ -5,7 +5,18 @@ import User from '../models/User.js';
 
 const memberIds = (project) => {
   const members = project?.members || [];
-  return members.map((m) => (m && m._id ? m._id.toString() : m.toString()));
+  if (!Array.isArray(members)) {
+    return [];
+  }
+  return members.map((m) => {
+    if (m && m._id) {
+      return m._id.toString();
+    } else if (m && typeof m === 'object' && m.toString) {
+      return m.toString();
+    } else {
+      return String(m);
+    }
+  });
 };
 
 const isProjectMember = (project, userId) => {

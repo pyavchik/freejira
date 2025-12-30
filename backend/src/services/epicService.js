@@ -123,3 +123,39 @@ export const getEpicTasks = async (epicId, userId) => {
     .populate('reporter', 'name email avatar')
     .sort({ position: 1, createdAt: -1 });
 };
+
+export const updateEpicPositions = async (epics, userId) => {
+  // Verify user has access to all projects of the epics being updated
+  const epicIds = epics.map((e) => e._id);
+  const epicsToUpdate = await Epic.find({ _id: { $in: epicIds } })
+    .populate('project', 'members')
+    .exec();
+
+  // Check if user has access to all projects
+  for (const epic of epicsToUpdate) {
+    const project = epic.project;
+    if (!project) {
+      throw new Error('Project not found for epic');
+    }
+    
+    const hasAccess = project.members.some(
+      (memberId) => memberId && memberId.toString() === userId.toString()
+    );
+    
+    if (!hasAccess) {
+      throw new Error('Access denied to update epic positions');
+    }
+  }
+
+  const updatePromises = epics.map((epic, index) =>
+    Epic.findByIdAndUpdate(epic._id, { position: index, status: epic.status })
+  );
+
+  await Promise.all(updatePromises);
+
+  return await Epic.find({ _id: { $in: epicIds } })
+    .populate('project', 'name key')
+    .populate('reporter', 'name email avatar')
+    .populate('assignee', 'name email avatar')
+    .exec();
+};

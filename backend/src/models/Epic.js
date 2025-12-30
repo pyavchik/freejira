@@ -42,6 +42,10 @@ const epicSchema = new mongoose.Schema(
       type: Date,
     },
     labels: [String],
+    position: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

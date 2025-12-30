@@ -123,6 +123,21 @@ export const deleteEpic = async (req, res, next) => {
   }
 };
 
+export const updateEpicPositions = async (req, res, next) => {
+  try {
+    const epics = await epicService.updateEpicPositions(
+      req.body.epics,
+      req.user.userId
+    );
+    res.status(200).json({
+      success: true,
+      data: epics,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const validateEpic = [
   body('name').trim().notEmpty().withMessage('Epic name is required'),
   body('project')
