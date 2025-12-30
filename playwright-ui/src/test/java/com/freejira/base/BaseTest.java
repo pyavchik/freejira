@@ -5,6 +5,7 @@ import com.freejira.pages.LoginPage;
 import com.microsoft.playwright.Page;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
 import java.util.Properties;
@@ -18,7 +19,7 @@ public class BaseTest {
     
     @Parameters({"browser"})
     @BeforeTest
-    public void setup(String browserName) {
+    public void setup(@Optional("chromium") String browserName) {
         playwrightFactory = new PlaywrightFactory();
         prop = new Properties();
         
