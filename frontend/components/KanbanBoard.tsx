@@ -95,14 +95,13 @@ export function KanbanBoard({
   return (
     <div style={{ height: '100%', overflow: 'auto' }}>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 p-6" style={{ minWidth: 'max-content', overflow: 'visible' }}>
+        <div className="flex gap-6 p-6" style={{ minWidth: 'max-content' }}>
           {columns.map((column) => {
             const columnTasks = getTasksByStatus(column.id)
             return (
             <div
               key={column.id}
               className="flex-shrink-0 w-80 bg-gray-100 dark:bg-gray-800 rounded-lg p-4 flex flex-col"
-              style={{ maxHeight: 'calc(100vh - 200px)' }}
             >
               <div className="mb-4 flex-shrink-0">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
